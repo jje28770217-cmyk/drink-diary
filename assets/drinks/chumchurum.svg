@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" height="192" width="128.0" class="di" role="img">
+<defs><clipPath id="di3c"><path d="M27 13H37V30C37 36 44 40 44 48V86Q44 91 39 91H25Q20 91 20 86V48C20 40 27 36 27 30Z"/></clipPath>
+<linearGradient id="di3s" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset=".07" stop-color="#000" stop-opacity=".1"/><stop offset=".16" stop-color="#fff" stop-opacity=".5"/><stop offset=".27" stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".1"/><stop offset=".93" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+<linearGradient id="di3v" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+<linearGradient id="di3m" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#8a93a8"/><stop offset=".3" stop-color="#fff"/><stop offset=".6" stop-color="#c3c9d8"/><stop offset="1" stop-color="#7d869b"/></linearGradient>
+<filter id="di3b" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.800"/></filter></defs>
+<ellipse cx="32" cy="93.200" rx="16" ry="2.600" fill="#1e2a22" opacity=".3" filter="url(#di3b)"/>
+
+<path d="M27 13H37V30C37 36 44 40 44 48V86Q44 91 39 91H25Q20 91 20 86V48C20 40 27 36 27 30Z" fill="#cbe8d6" fill-opacity=".95"/>
+<g clip-path="url(#di3c)"><rect x="0" y="13.00" width="64" height="83.00" fill="#2e9e55"/>
+      <rect x="0" y="13.00" width="64" height="83.00" fill="url(#di3v)"/>
+      <rect x="0" y="13.00" width="64" height="2.600" fill="#fff" opacity=".55"/></g>
+
+<rect x="26" y="4.5" width="12" height="10" rx="2.4" fill="url(#di3m)"/><rect x="26" y="4.5" width="12" height="10" rx="2.4" fill="#1f7a45" opacity=".78"/>
+      <path d="M29.6 5.5V13.5M32 5.5V13.5M34.4 5.5V13.5" stroke="#fff" stroke-opacity=".28" stroke-width=".6"/><rect x="27" y="14" width="10" height="2.4" fill="#1f7a45" opacity=".55"/><rect x="20.3" y="52" width="23.4" height="29" rx="2.2" fill="#ffffff"/>
+      <rect x="20.3" y="52" width="23.4" height="4.64" rx="2" fill="#6fcf97"/>
+      
+      <text x="32" y="71.14" text-anchor="middle" font-family='"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif' font-size="5.6" font-weight="900"  fill="#1b6e3f" textLength="18.4" lengthAdjust="spacingAndGlyphs">처음처럼</text>
+      
+<path d="M27 13H37V30C37 36 44 40 44 48V86Q44 91 39 91H25Q20 91 20 86V48C20 40 27 36 27 30Z" fill="url(#di3s)"/>
+<path d="M27 13H37V30C37 36 44 40 44 48V86Q44 91 39 91H25Q20 91 20 86V48C20 40 27 36 27 30Z" fill="none" stroke="#1f7a45" stroke-opacity=".75" stroke-width="1.200" stroke-linejoin="round"/>
+<rect x="22.4" y="46" width="2.600" height="40" rx="1.300" fill="#fff" opacity=".7"/><rect x="27" y="50" width="1" height="28" rx=".5" fill="#fff" opacity=".28"/>
+</svg>

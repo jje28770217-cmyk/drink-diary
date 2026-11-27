@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" height="192" width="128.0" class="di" role="img">
+<defs><clipPath id="di91c"><path d="M29 6H35V34C35 40 42 44 42 54V86Q42 91 37 91H27Q22 91 22 86V54C22 44 29 40 29 34Z"/></clipPath>
+<linearGradient id="di91s" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset=".07" stop-color="#000" stop-opacity=".1"/><stop offset=".16" stop-color="#fff" stop-opacity=".5"/><stop offset=".27" stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".1"/><stop offset=".93" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+<linearGradient id="di91v" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+<linearGradient id="di91m" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#8a93a8"/><stop offset=".3" stop-color="#fff"/><stop offset=".6" stop-color="#c3c9d8"/><stop offset="1" stop-color="#7d869b"/></linearGradient>
+<filter id="di91b" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.800"/></filter></defs>
+<ellipse cx="32" cy="93.200" rx="16" ry="2.600" fill="#1e2a22" opacity=".3" filter="url(#di91b)"/>
+
+<path d="M29 6H35V34C35 40 42 44 42 54V86Q42 91 37 91H27Q22 91 22 86V54C22 44 29 40 29 34Z" fill="#cfe3b8" fill-opacity=".95"/>
+<g clip-path="url(#di91c)"><rect x="0" y="6.00" width="64" height="90.00" fill="#f5e6a2"/>
+      <rect x="0" y="6.00" width="64" height="90.00" fill="url(#di91v)"/>
+      <rect x="0" y="6.00" width="64" height="2.600" fill="#fff" opacity=".55"/></g>
+
+<rect x="28" y="2.500" width="8" height="17" rx="2" fill="#c9a24a"/><rect x="28.300" y="3" width="2" height="16" rx="1" fill="#fff" opacity=".3"/><rect x="22.3" y="60" width="19.4" height="22" rx="2.2" fill="#fffaf0"/>
+      <rect x="22.3" y="60" width="19.4" height="3.52" rx="2" fill="#c9a24a"/>
+      
+      <text x="32" y="74.52" text-anchor="middle" font-family='"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif' font-size="5.6" font-weight="900"  fill="#8a6a1a" textLength="14.399999999999999" lengthAdjust="spacingAndGlyphs">SPARKLING</text>
+      
+<path d="M29 6H35V34C35 40 42 44 42 54V86Q42 91 37 91H27Q22 91 22 86V54C22 44 29 40 29 34Z" fill="url(#di91s)"/>
+<path d="M29 6H35V34C35 40 42 44 42 54V86Q42 91 37 91H27Q22 91 22 86V54C22 44 29 40 29 34Z" fill="none" stroke="#6a8f4e" stroke-opacity=".75" stroke-width="1.200" stroke-linejoin="round"/>
+<rect x="24" y="54" width="2.600" height="34" rx="1.300" fill="#fff" opacity=".7"/><rect x="28.6" y="58" width="1" height="22" rx=".5" fill="#fff" opacity=".28"/>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" height="192" width="128.0" class="di" role="img">
+<defs><clipPath id="di97c"><path d="M8 12H56L35 46Q32 49 29 46Z"/></clipPath>
+<linearGradient id="di97s" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset=".07" stop-color="#000" stop-opacity=".1"/><stop offset=".16" stop-color="#fff" stop-opacity=".5"/><stop offset=".27" stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".1"/><stop offset=".93" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+<linearGradient id="di97v" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+<linearGradient id="di97m" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#8a93a8"/><stop offset=".3" stop-color="#fff"/><stop offset=".6" stop-color="#c3c9d8"/><stop offset="1" stop-color="#7d869b"/></linearGradient>
+<filter id="di97b" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.800"/></filter></defs>
+<ellipse cx="32" cy="93.200" rx="16" ry="2.600" fill="#1e2a22" opacity=".3" filter="url(#di97b)"/>
+<rect x="30.400" y="46" width="3.200" height="36" fill="#e3e9f5"/><path d="M19 85Q32 78 45 85Q45 90 32 90Q19 90 19 85Z" fill="#e9eef9" stroke="#9db0cf" stroke-width="1.400"/>
+<path d="M8 12H56L35 46Q32 49 29 46Z" fill="#f7f1fc" fill-opacity=".95"/>
+<g clip-path="url(#di97c)"><rect x="0" y="12.00" width="64" height="84.00" fill="#ff8fb3"/>
+      <rect x="0" y="12.00" width="64" height="84.00" fill="url(#di97v)"/>
+      <rect x="0" y="12.00" width="64" height="2.600" fill="#fff" opacity=".55"/></g>
+
+<path d="M38 3L51 22" stroke="#9a8a6a" stroke-width="1.600"/><circle cx="49" cy="17" r="4.200" fill="#e5384f"/><circle cx="48" cy="16" r="1.200" fill="#fff" opacity=".7"/>
+<path d="M8 12H56L35 46Q32 49 29 46Z" fill="url(#di97s)"/>
+<path d="M8 12H56L35 46Q32 49 29 46Z" fill="none" stroke="#9db0cf" stroke-opacity=".75" stroke-width="1.200" stroke-linejoin="round"/>
+<rect x="14" y="15" width="2.600" height="8" rx="1.300" fill="#fff" opacity=".7"/><rect x="18.6" y="19" width="1" height="6" rx=".5" fill="#fff" opacity=".28"/>
+</svg>

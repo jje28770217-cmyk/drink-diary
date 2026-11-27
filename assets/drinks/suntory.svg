@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" height="192" width="128.0" class="di" role="img">
+<defs><clipPath id="di67c"><path d="M26 12H38V26L44 34Q46 36 46 40V86Q46 91 41 91H23Q18 91 18 86V40Q18 36 20 34L26 26Z"/></clipPath>
+<linearGradient id="di67s" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset=".07" stop-color="#000" stop-opacity=".1"/><stop offset=".16" stop-color="#fff" stop-opacity=".5"/><stop offset=".27" stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".1"/><stop offset=".93" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+<linearGradient id="di67v" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+<linearGradient id="di67m" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#8a93a8"/><stop offset=".3" stop-color="#fff"/><stop offset=".6" stop-color="#c3c9d8"/><stop offset="1" stop-color="#7d869b"/></linearGradient>
+<filter id="di67b" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.800"/></filter></defs>
+<ellipse cx="32" cy="93.200" rx="16" ry="2.600" fill="#1e2a22" opacity=".3" filter="url(#di67b)"/>
+
+<path d="M26 12H38V26L44 34Q46 36 46 40V86Q46 91 41 91H23Q18 91 18 86V40Q18 36 20 34L26 26Z" fill="#f3dc9a" fill-opacity=".95"/>
+<g clip-path="url(#di67c)"><rect x="0" y="12.00" width="64" height="84.00" fill="#e0a53a"/>
+      <rect x="0" y="12.00" width="64" height="84.00" fill="url(#di67v)"/>
+      <rect x="0" y="12.00" width="64" height="2.600" fill="#fff" opacity=".55"/></g>
+
+<rect x="25" y="4" width="14" height="9" rx="2.4" fill="url(#di67m)"/><rect x="25" y="4" width="14" height="9" rx="2.4" fill="#b9893a" opacity=".78"/>
+      <path d="M29.2 5V12M32 5V12M34.8 5V12" stroke="#fff" stroke-opacity=".28" stroke-width=".6"/><rect x="18.3" y="50" width="27.4" height="30" rx="2.2" fill="#fff4cf"/>
+      <rect x="18.3" y="50" width="27.4" height="4.8" rx="2" fill="#7a5a2a"/>
+      
+      <text x="32" y="68.6" text-anchor="middle" font-family='"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif' font-size="7.5" font-weight="900"  fill="#5a3a08" textLength="9.2" lengthAdjust="spacingAndGlyphs">角瓶</text>
+      <text x="32" y="75.8" text-anchor="middle" font-family='"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif' font-size="3.3" font-weight="700" font-style="italic" fill="#7a5a2a" textLength="18.2" lengthAdjust="spacingAndGlyphs">SUNTORY</text>
+<path d="M26 12H38V26L44 34Q46 36 46 40V86Q46 91 41 91H23Q18 91 18 86V40Q18 36 20 34L26 26Z" fill="url(#di67s)"/>
+<path d="M26 12H38V26L44 34Q46 36 46 40V86Q46 91 41 91H23Q18 91 18 86V40Q18 36 20 34L26 26Z" fill="none" stroke="#b0873a" stroke-opacity=".75" stroke-width="1.200" stroke-linejoin="round"/>
+<rect x="20.4" y="42" width="2.600" height="42" rx="1.300" fill="#fff" opacity=".7"/><rect x="25" y="46" width="1" height="30" rx=".5" fill="#fff" opacity=".28"/>
+</svg>

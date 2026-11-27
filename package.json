@@ -1,0 +1,16 @@
+{
+  "name": "drink-balance",
+  "version": "1.0.0",
+  "private": true,
+  "description": "음주 기록·분석 웹앱 (프론트엔드 정적 파일 + 선택형 로컬 백엔드)",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "node --test tests/core.test.js tests/server.test.js",
+    "build:assets": "node tools/build-assets.js",
+    "build:images": "node tools/build-manifest.js",
+    "test:e2e": "node tests/e2e/e2e.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

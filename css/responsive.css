@@ -1,0 +1,29 @@
+/* css/responsive.css - 태블릿·PC 배치. 모바일(기본)은 style.css, 여기서는 넓은 화면만 다룹니다. */
+
+/* 태블릿 이상 */
+@media (min-width:720px){
+  .app{max-width:760px}
+  .pgrid.c4{grid-template-columns:repeat(5,1fr)}
+  .pgrid.c3{grid-template-columns:repeat(4,1fr)}
+  .cell{min-height:70px}
+  .screen-in{max-width:760px}
+  .foot .btn{max-width:728px}
+  .sheet{max-width:620px;border-radius:26px;max-height:86vh}
+  .sheet-wrap{align-items:center}
+  .nav-in{max-width:760px}
+  .kpis{grid-template-columns:repeat(4,1fr)}
+}
+
+/* PC: 통계는 2열, 분량 선택은 좌(제품)·우(분량) 2열 */
+@media (min-width:1024px){
+  .app{max-width:1040px}
+  .pgrid.c4{grid-template-columns:repeat(6,1fr)}
+  .pgrid.c3{grid-template-columns:repeat(5,1fr)}
+  .cell{min-height:84px}
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+  .stat-grid .card{margin-bottom:0}
+  .screen-in{max-width:1000px}
+  .amount-grid{display:grid;grid-template-columns:minmax(380px,1fr) minmax(380px,1fr);gap:28px;align-items:start}
+  .foot .btn{max-width:968px}
+  .nav-in{max-width:1040px}
+}

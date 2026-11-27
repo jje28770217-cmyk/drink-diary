@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" height="192" width="128.0" class="di" role="img">
+<defs><clipPath id="di55c"><path d="M28 10H36V34C36 40 43 44 43 52V86Q43 91 38 91H26Q21 91 21 86V52C21 44 28 40 28 34Z"/></clipPath>
+<linearGradient id="di55s" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset=".07" stop-color="#000" stop-opacity=".1"/><stop offset=".16" stop-color="#fff" stop-opacity=".5"/><stop offset=".27" stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".1"/><stop offset=".93" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+<linearGradient id="di55v" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+<linearGradient id="di55m" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#8a93a8"/><stop offset=".3" stop-color="#fff"/><stop offset=".6" stop-color="#c3c9d8"/><stop offset="1" stop-color="#7d869b"/></linearGradient>
+<filter id="di55b" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.800"/></filter></defs>
+<ellipse cx="32" cy="93.200" rx="16" ry="2.600" fill="#1e2a22" opacity=".3" filter="url(#di55b)"/>
+
+<path d="M28 10H36V34C36 40 43 44 43 52V86Q43 91 38 91H26Q21 91 21 86V52C21 44 28 40 28 34Z" fill="#4a3a30" fill-opacity=".95"/>
+<g clip-path="url(#di55c)"><rect x="0" y="10.00" width="64" height="86.00" fill="#2b1a14"/>
+      <rect x="0" y="10.00" width="64" height="86.00" fill="url(#di55v)"/>
+      <rect x="0" y="10.00" width="64" height="2.600" fill="#fff" opacity=".55"/></g>
+
+<rect x="27" y="4" width="10" height="7" rx="2.4" fill="url(#di55m)"/><rect x="27" y="4" width="10" height="7" rx="2.4" fill="#1d1d22" opacity=".78"/>
+      <path d="M30 5V10M32 5V10M34 5V10" stroke="#fff" stroke-opacity=".28" stroke-width=".6"/><rect x="28" y="26" width="8" height="9" fill="#e8c35a" opacity=".55"/><rect x="21.3" y="56" width="21.4" height="22" rx="2.2" fill="#1d1d22"/>
+      <rect x="21.3" y="56" width="21.4" height="3.52" rx="2" fill="#e8c35a"/>
+      
+      <text x="32" y="70.52" text-anchor="middle" font-family='"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif' font-size="5.6" font-weight="900"  fill="#e8c35a" textLength="16.4" lengthAdjust="spacingAndGlyphs">GUINNESS</text>
+      
+<path d="M28 10H36V34C36 40 43 44 43 52V86Q43 91 38 91H26Q21 91 21 86V52C21 44 28 40 28 34Z" fill="url(#di55s)"/>
+<path d="M28 10H36V34C36 40 43 44 43 52V86Q43 91 38 91H26Q21 91 21 86V52C21 44 28 40 28 34Z" fill="none" stroke="#1d1d22" stroke-opacity=".75" stroke-width="1.200" stroke-linejoin="round"/>
+<rect x="23" y="50" width="2.600" height="36" rx="1.300" fill="#fff" opacity=".7"/><rect x="27.6" y="54" width="1" height="24" rx=".5" fill="#fff" opacity=".28"/>
+</svg>

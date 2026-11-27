@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" height="192" width="128.0" class="di" role="img">
+<defs><clipPath id="di94c"><path d="M28 14H36V32C36 38 46 42 46 56V82Q46 90 38 90H26Q18 90 18 82V56C18 42 28 38 28 32Z"/></clipPath>
+<linearGradient id="di94s" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset=".07" stop-color="#000" stop-opacity=".1"/><stop offset=".16" stop-color="#fff" stop-opacity=".5"/><stop offset=".27" stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".1"/><stop offset=".93" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+<linearGradient id="di94v" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+<linearGradient id="di94m" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#8a93a8"/><stop offset=".3" stop-color="#fff"/><stop offset=".6" stop-color="#c3c9d8"/><stop offset="1" stop-color="#7d869b"/></linearGradient>
+<filter id="di94b" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.800"/></filter></defs>
+<ellipse cx="32" cy="93.200" rx="16" ry="2.600" fill="#1e2a22" opacity=".3" filter="url(#di94b)"/>
+
+<path d="M28 14H36V32C36 38 46 42 46 56V82Q46 90 38 90H26Q18 90 18 82V56C18 42 28 38 28 32Z" fill="#f6f8ff" fill-opacity=".95"/>
+<g clip-path="url(#di94c)"><rect x="0" y="14.00" width="64" height="82.00" fill="#cfe6f6"/>
+      <rect x="0" y="14.00" width="64" height="82.00" fill="url(#di94v)"/>
+      <rect x="0" y="14.00" width="64" height="2.600" fill="#fff" opacity=".55"/></g>
+
+<path d="M18 62Q25 58 32 62T46 62" stroke="#4f6fd0" stroke-width="2.200" fill="none"/><text x="32" y="76" text-anchor="middle" font-family='"Pretendard","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif' font-size="6" font-weight="900"  fill="#4f6fd0" textLength="14" lengthAdjust="spacingAndGlyphs">日本酒</text><rect x="27" y="9.5" width="10" height="5.5" rx="2.4" fill="url(#di94m)"/><rect x="27" y="9.5" width="10" height="5.5" rx="2.4" fill="#6f8fe0" opacity=".78"/>
+      <path d="M30 10.5V14M32 10.5V14M34 10.5V14" stroke="#fff" stroke-opacity=".28" stroke-width=".6"/>
+<path d="M28 14H36V32C36 38 46 42 46 56V82Q46 90 38 90H26Q18 90 18 82V56C18 42 28 38 28 32Z" fill="url(#di94s)"/>
+<path d="M28 14H36V32C36 38 46 42 46 56V82Q46 90 38 90H26Q18 90 18 82V56C18 42 28 38 28 32Z" fill="none" stroke="#8aa6d9" stroke-opacity=".75" stroke-width="1.200" stroke-linejoin="round"/>
+<rect x="21" y="52" width="2.600" height="28" rx="1.300" fill="#fff" opacity=".7"/><rect x="25.6" y="56" width="1" height="16" rx=".5" fill="#fff" opacity=".28"/>
+</svg>

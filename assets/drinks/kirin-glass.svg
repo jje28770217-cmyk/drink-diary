@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" height="192" width="128.0" class="di" role="img">
+<defs><clipPath id="di41c"><path d="M14 24H46V82Q46 88 40 88H20Q14 88 14 82Z"/></clipPath>
+<linearGradient id="di41s" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".34"/><stop offset=".07" stop-color="#000" stop-opacity=".1"/><stop offset=".16" stop-color="#fff" stop-opacity=".5"/><stop offset=".27" stop-color="#fff" stop-opacity=".08"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/><stop offset=".78" stop-color="#000" stop-opacity=".1"/><stop offset=".93" stop-color="#000" stop-opacity=".28"/><stop offset="1" stop-color="#000" stop-opacity=".4"/></linearGradient>
+<linearGradient id="di41v" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".18"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".22"/></linearGradient>
+<linearGradient id="di41m" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#8a93a8"/><stop offset=".3" stop-color="#fff"/><stop offset=".6" stop-color="#c3c9d8"/><stop offset="1" stop-color="#7d869b"/></linearGradient>
+<filter id="di41b" x="-30%" y="-100%" width="160%" height="300%"><feGaussianBlur stdDeviation="1.800"/></filter></defs>
+<ellipse cx="32" cy="93.200" rx="16" ry="2.600" fill="#1e2a22" opacity=".3" filter="url(#di41b)"/>
+<path d="M46 34H53Q59 34 59 42V64Q59 72 53 72H46" stroke="#9db0cf" stroke-width="5" fill="none" stroke-linecap="round" opacity=".85"/>
+<path d="M14 24H46V82Q46 88 40 88H20Q14 88 14 82Z" fill="#eef3fb" fill-opacity=".95"/>
+<g clip-path="url(#di41c)"><rect x="0" y="30.00" width="64" height="66.00" fill="#f6bf3a"/>
+      <rect x="0" y="30.00" width="64" height="66.00" fill="url(#di41v)"/>
+      <rect x="0" y="30.00" width="64" height="2.600" fill="#fff" opacity=".55"/></g>
+<path d="M13 33q3-9 9-4q4-8 10-2q5-7 10-1q6-5 9 4v7h-38z" fill="#fffdf4" stroke="#f1e7c8" stroke-width=".8"/>
+
+<path d="M14 24H46V82Q46 88 40 88H20Q14 88 14 82Z" fill="url(#di41s)"/>
+<path d="M14 24H46V82Q46 88 40 88H20Q14 88 14 82Z" fill="none" stroke="#9db0cf" stroke-opacity=".75" stroke-width="1.200" stroke-linejoin="round"/>
+<rect x="18" y="32" width="2.600" height="48" rx="1.300" fill="#fff" opacity=".7"/><rect x="22.6" y="36" width="1" height="36" rx=".5" fill="#fff" opacity=".28"/>
+</svg>
