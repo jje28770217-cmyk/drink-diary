@@ -12,15 +12,23 @@ async function open(port, name, fake) {
   const inj = `window.DB={};let _c;Object.defineProperty(DB,'config',{configurable:true,get(){return _c},set(v){v.supabase={url:'${fake.url}',key:'${fake.KEY}'};_c=v}});`;
   await b.send('Page.addScriptToEvaluateOnNewDocument', { source: inj });
   await b.goto(URL); await boot(b);
-  await b.eval("window.confirm=()=>true;window.c=s=>{const e=document.querySelector(s);if(!e)throw new Error('missing '+s);e.click();return true};window.txt=s=>(document.querySelector(s)||{}).innerText||'';true");
+  await b.eval("window.confirm=()=>true;DB.app.S.tab='cal';DB.app.render();window.c=s=>{const e=document.querySelector(s);if(!e)throw new Error('missing '+s);e.click();return true};window.txt=s=>(document.querySelector(s)||{}).innerText||'';true");
   return b;
 }
-async function boot(b) { for (let i = 0; i < 60; i++) { try { if (await b.eval('!!(window.DB && DB.app)')) return; } catch (e) { } await sleep(150); } throw new Error('boot'); }
+async function openRaw(port, name, fake, url) {   // 첫 실행 화면을 그대로 보는 브라우저(캘린더로 건너뛰지 않음)
+  const b = await launch(port, SP + '/prof_' + name, 420, 1400); await b.setSize(420, 1400, true);
+  const inj = `window.DB={};let _c;Object.defineProperty(DB,'config',{configurable:true,get(){return _c},set(v){v.supabase={url:'${fake.url}',key:'${fake.KEY}'};_c=v}});`;
+  await b.send('Page.addScriptToEvaluateOnNewDocument', { source: inj });
+  await b.goto(url || URL); await boot(b); await H(b); return b;
+}
+const H = b => b.eval("window.confirm=()=>true;window.c=s=>{const e=document.querySelector(s);if(!e)throw new Error('missing '+s);e.click();return true};window.txt=s=>(document.querySelector(s)||{}).innerText||'';true");
+const fillAndClick = (b, email, act) => b.eval(`document.querySelector('#emailIn').value='${email}';document.querySelector('#pwIn').value='secret1';c('[data-act=${act}]');true`);
+async function boot(b) { for (let i = 0; i < 60; i++) { try { if (await b.eval('!!(window.DB && DB.app)')) return; } catch (e) { } await sleep(150); } throw new Error('boot ' + (b.logs || []).join(' | ')); }
 async function signup(b, email) {
   await b.eval("c('[data-act=tab][data-v=set]');true");
   await b.eval(`document.querySelector('#emailIn').value='${email}';document.querySelector('#pwIn').value='secret1';c('[data-act=signup]');true`);
   await sleep(1500); await boot(b);
-  await b.eval("window.confirm=()=>true;window.c=s=>{const e=document.querySelector(s);if(!e)throw new Error('missing '+s);e.click();return true};window.txt=s=>(document.querySelector(s)||{}).innerText||'';true");
+  await b.eval("window.confirm=()=>true;DB.app.S.tab='cal';DB.app.render();window.c=s=>{const e=document.querySelector(s);if(!e)throw new Error('missing '+s);e.click();return true};window.txt=s=>(document.querySelector(s)||{}).innerText||'';true");
 }
 
 (async () => {
@@ -72,8 +80,40 @@ async function signup(b, email) {
     // 로그아웃
     await A.eval("c('[data-act=logout]');true"); await sleep(1500); await boot(A);
     ok('로그아웃 후 로그인 폼 복귀', await A.eval("DB.app.cloud.loggedIn") === false);
+    // ===== 첫 실행: 로그인 → 내 정보, 한 번 하면 다시 묻지 않음 =====
+    const C = await openRaw(9343, 'c', fake);
+    ok('첫 실행: 로그인 화면이 가장 먼저, 하단 메뉴는 숨김', (await C.eval('DB.app.S.tab')) === 'onboard' && /로그인 없이 이 기기에서만/.test(await C.eval("txt('#app')")) && (await C.eval("document.getElementById('nav').innerHTML.trim()")) === '');
+    await fillAndClick(C, 'onb@test.com', 'signup'); await sleep(2000); await boot(C); await H(C);
+    ok('가입 후 "내 정보" 화면(2/2)', /내 정보를 알려 주세요/.test(await C.eval("txt('#app')")) && /2 \/ 2/.test(await C.eval("txt('#app')")));
+    await C.eval("c('[data-act=sex][data-v=male]');const i=document.getElementById('ageIn');i.value='30';i.dispatchEvent(new Event('input',{bubbles:true}));c('[data-act=obDone]');true"); await sleep(1500);
+    ok('시작하기 → 캘린더, 메뉴 표시, 내 정보 저장', (await C.eval('DB.app.S.tab')) === 'cal' && (await C.eval("document.getElementById('nav').innerHTML.trim().length > 0")) && (await C.eval('JSON.stringify([DB.app.store.profile.sex, DB.app.store.profile.age, DB.app.store.profile.onboarded])')) === '["male","30",true]');
+    await C.goto(URL); await boot(C); await H(C);
+    ok('다시 열어도 묻지 않음', (await C.eval('DB.app.S.tab')) === 'cal');
+    // 다른 기기(새 브라우저)에서 같은 계정으로 로그인 → 내 정보가 이미 있어 바로 캘린더
+    const D = await openRaw(9344, 'd', fake); await fillAndClick(D, 'onb@test.com', 'login'); await sleep(2000); await boot(D);
+    ok('다른 기기 로그인: 내 정보를 다시 묻지 않음(계정에 저장됨)', (await D.eval('DB.app.S.tab')) === 'cal' && (await D.eval('DB.app.store.profile.sex')) === 'male');
+    // 로그인 없이 시작
+    const E = await openRaw(9345, 'e', fake); await E.eval("c('[data-act=obSkip]');true");
+    ok('로그인 없이 시작 → 내 정보 화면', /내 정보를 알려 주세요/.test(await E.eval("txt('#app')")));
+    await E.eval("c('[data-act=obDone]');true"); await sleep(300); await E.goto(URL); await boot(E);
+    ok('로그인 없이 시작한 뒤에도 다시 묻지 않음', (await E.eval('DB.app.S.tab')) === 'cal');
+    // ===== 친구 초대 링크 =====
+    await C.eval("window.__shared=null;navigator.share=d=>{window.__shared=d;return Promise.resolve()};c('[data-act=tab][data-v=set]');true"); await sleep(800);
+    ok('설정 카드 제목이 "친구 추가"이고 ＋ 버튼이 있음', /친구 추가/.test(await C.eval("txt('#app')")) && !/계정·친구/.test(await C.eval("txt('#app')")) && (await C.eval("!!document.querySelector('[data-act=shareInvite]')")));
+    await C.eval("c('[data-act=shareInvite]');true"); await sleep(300);
+    const sh = JSON.parse(await C.eval('JSON.stringify(window.__shared)')), myCode = await C.eval('DB.app.cloud.getProfile().then(p=>p.friend_code)');
+    ok('＋ 누르면 내 친구 코드가 담긴 초대 링크를 공유', sh && sh.url === 'https://jje28770217-cmyk.github.io/drink-diary/?friend=' + myCode && /드링크 밸런스/.test(sh.title), sh && sh.url);
+    const F = await openRaw(9346, 'f', fake, URL + '?friend=' + myCode);
+    ok('초대 링크로 처음 들어오면 로그인 화면에 초대 안내', (await F.eval('DB.app.S.tab')) === 'onboard' && new RegExp(myCode).test(await F.eval("txt('#app')")));
+    await fillAndClick(F, 'inv@test.com', 'signup'); await sleep(2000); await boot(F); await H(F);
+    await F.eval("c('[data-act=obDone]');true"); await sleep(1500);
+    ok('내 정보를 마치면 친구 화면에 초대 코드가 자동 입력', (await F.eval('DB.app.S.tab')) === 'friends' && (await F.eval("document.getElementById('fcode').value")) === myCode);
+    await F.eval("c('[data-act=friendAdd]');true"); await sleep(1200);
+    ok('요청 보내기 → 수락 대기', /수락 대기 중/.test(await F.eval("txt('#app')")));
+    await F.shot(SP + '/invite-f.png');
+    C.close(); D.close(); E.close(); F.close();
     ok('콘솔 오류 없음(A/B)', A.logs.length === 0 && B.logs.length === 0, A.logs.concat(B.logs).join(' | '));
   } catch (e) { R.push('FAIL 예외 ' + e.message); }
   console.log(R.join('\n')); console.log('\n실패 ' + R.filter(x => x.startsWith('FAIL')).length + '개');
-  A.close(); B.close(); await fake.stop(); fs.rmSync(SP, { recursive: true, force: true }); process.exit(R.some(x => x.startsWith('FAIL')) ? 1 : 0);
+  A.close(); B.close(); await fake.stop(); try { fs.rmSync(SP, { recursive: true, force: true }); } catch (e) { /* Edge가 아직 파일을 쥐고 있으면 임시 폴더는 그대로 둠 */ } process.exit(R.some(x => x.startsWith('FAIL')) ? 1 : 0);
 })();

@@ -9,7 +9,7 @@ async function scenario(b, url, label, expectRemote) {
   await b.goto(url);
   for (let i = 0; i < 40; i++) { if (await b.eval('!!(window.DB && DB.app)')) break; await sleep(150); }
   ok('앱 부팅', await b.eval('!!(window.DB && DB.app)'));
-  await b.eval(`window.confirm=()=>true; window.c=s=>{const e=document.querySelector(s); if(!e) throw new Error('missing '+s); e.click(); return true}; window.txt=s=>(document.querySelector(s)||{}).innerText||''; true`);
+  await b.eval(`window.confirm=()=>true; DB.app.S.tab='cal';DB.app.render(); window.c=s=>{const e=document.querySelector(s); if(!e) throw new Error('missing '+s); e.click(); return true}; window.txt=s=>(document.querySelector(s)||{}).innerText||''; true`);
   await b.eval(`DB.app.store.wipe(); DB.app.render(); true`);
   // 1) 소주 반병
   await b.eval(`c('[data-act=tab][data-v=rec]'); c('[data-act=pick][data-v=chamisul-fresh]'); c('[data-act=qty][data-v="0.5"]'); true`);
@@ -37,11 +37,14 @@ async function scenario(b, url, label, expectRemote) {
   await b.eval(`c('.cell.today'); c('.day-card [data-act=delEntry]'); true`);
   ok('삭제', await b.eval(`DB.app.store.entriesOf(DB.app.S.recDate).length`) === 1);
   await b.eval(`c('[data-act=closeSheet]'); true`);
-  // 6) 금주 기록 (어제)
-  const y = await b.eval(`DB.calc.addDays(DB.calc.todayS(), -1)`);
-  await b.eval(`c('[data-act=day][data-v="${y}"]'); c('.day-card [data-act=sober]'); true`);
-  const y2 = await b.eval('DB.calc.addDays(DB.calc.todayS(), -2)');
-  ok('금주일 체크 표시, 미기록일은 빈칸', await b.eval(`!!document.querySelector('[data-act=day][data-v="${y}"] .mk.sober')`) && await b.eval(`!document.querySelector('[data-act=day][data-v="${y2}"] .mk')`));
+  // 6) 금주: 기록 없는 날은 첫 기록일 이후부터 자동 금주(칸 색·체크), 첫 기록 전·마신 날은 아님
+  const y = await b.eval(`DB.calc.addDays(DB.calc.todayS(), -1)`), y2 = await b.eval('DB.calc.addDays(DB.calc.todayS(), -2)'), y3 = await b.eval('DB.calc.addDays(DB.calc.todayS(), -3)'), y4 = await b.eval('DB.calc.addDays(DB.calc.todayS(), -4)');
+  await b.eval(`DB.app.store.saveEntry('${y3}', { id: 'e-auto', pid: 'cass', name: '카스 프레시', cat: 'beer', icon: 'cass', t: 'can', qty: 1, unitMl: 500, abv: 4.5, ml: 500, g: 17.7 }); DB.app.render(); c('[data-act=day][data-v="${y}"]'); true`);
+  const sober = d => b.eval(`!!document.querySelector('[data-act=day][data-v="${d}"] .mk.sober')`), cls = d => b.eval(`document.querySelector('[data-act=day][data-v="${d}"]').className`);
+  ok('기록 없는 날(어제·그제)은 자동 금주: 체크와 칸 색', (await sober(y)) && (await sober(y2)) && /st-sober/.test(await cls(y)));
+  ok('첫 기록 전(4일 전)·마신 날(3일 전)은 금주가 아님', !(await sober(y4)) && !(await sober(y3)));
+  ok('날짜 카드에 자동 금주 안내(금주 버튼 없음)', /자동으로 금주일/.test(await b.eval(`txt('.day-card')`)) && !(await b.eval(`!!document.querySelector('.day-card [data-act=sober]')`)));
+  await b.eval(`DB.app.store.deleteEntry('${y3}', 'e-auto'); DB.app.render(); true`);
   // 7) 검색 + 이미지 파일 연결
   await b.eval(`c('[data-act=tab][data-v=rec]'); const q=document.getElementById('q'); q.value='새로'; q.dispatchEvent(new Event('input',{bubbles:true})); true`);
   const names = await b.eval(`JSON.stringify([...document.querySelectorAll('.pcard .nm')].map(x=>x.textContent))`);
@@ -61,7 +64,23 @@ async function scenario(b, url, label, expectRemote) {
   // 10) 통계/리포트/설정
   await b.eval(`c('[data-act=tab][data-v=stats]'); true`);
   const st = await b.eval(`txt('#app')`);
-  ok('통계(월간)', /총 음주 횟수/.test(st) && /주차별 순수 알코올/.test(st) && /주종별 알코올 비율/.test(st) && /음주 습관 변화 추이/.test(st) && /자주 마신 제품 TOP 3/.test(st) && !!(await b.eval(`document.querySelectorAll('#app svg.chart').length >= 2`)));
+  ok('통계(월간)', /음주 횟수/.test(st) && /과 비교/.test(st) && !/주종별 알코올 비율/.test(st) && !/주차별 순수 알코올/.test(st) && !/최장 연속/.test(st) && /음주 습관 변화 추이/.test(st) && /자주 마신 제품 TOP 3/.test(st) && !!(await b.eval(`document.querySelectorAll('#app svg.chart').length >= 1 && document.querySelectorAll('#app .kpi').length === 4 && !!document.querySelector('#app .cmt')`)));
+  // 통계 기간 선택 달력: 몇 년 전 달·연도·주로 이동
+  {
+    const lab = () => b.eval(`txt('.range-label')`), yr = await b.eval('+DB.calc.todayS().slice(0,4)');
+    await b.eval(`c('[data-act=rangePick]'); true`);
+    ok('달력 아이콘을 누르면 월 선택 달력이 펼쳐짐', /월 선택/.test(await b.eval(`txt('#sheet')`)) && (await b.eval(`document.querySelectorAll('#sheet .pick-btn').length`)) === 12);
+    await b.eval(`c('[data-act=pickNav][data-v="-1"]'); c('[data-act=pickNav][data-v="-1"]'); c('[data-act=pickMonth][data-v="${yr - 2}-03"]'); true`);
+    ok('2년 전 3월로 이동', new RegExp(`${yr - 2}년 3월`).test(await lab()) && (await b.eval('DB.app.S.statOff')) === (-24 + (3 - (+(await b.eval('DB.calc.todayS()')).slice(5, 7)))));
+    await b.eval(`c('[data-act=statP][data-v=year]'); c('[data-act=rangePick]'); true`);
+    ok('연 단위: 연도 선택 목록', /연도 선택/.test(await b.eval(`txt('#sheet')`)));
+    await b.eval(`c('[data-act=pickYearSel][data-v="${yr - 1}"]'); true`);
+    ok('작년으로 이동', new RegExp(`${yr - 1}년`).test(await lab()));
+    await b.eval(`c('[data-act=statP][data-v=week]'); c('[data-act=rangePick]'); c('[data-act=pickNav][data-v="-1"]'); true`);
+    const dd = await b.eval(`DB.calc.addDays(DB.calc.todayS(), -40)`);
+    ok('주 단위: 날짜를 누르는 달력', /주 선택/.test(await b.eval(`txt('#sheet')`)) && (await b.eval(`document.querySelectorAll('#sheet .cell.pk').length > 27`)));
+    await b.eval(`DB.app.S.statOff = 0; c('[data-act=closeSheet]'); c('[data-act=statP][data-v=month]'); true`);
+  }
   await b.eval(`c('[data-act=statP][data-v=week]'); true`); ok('통계(주간)', /일/.test(await b.eval(`txt('#app')`)));
   await b.eval(`c('[data-act=statP][data-v=year]'); true`); ok('통계(연간)', /20\d\d년/.test(await b.eval(`txt('#app')`)));
   await b.eval(`c('[data-act=tab][data-v=report]'); true`);
@@ -111,7 +130,7 @@ async function scenario(b, url, label, expectRemote) {
     ok('다크에서 차트·본문 색 변수가 바뀜', (await b.eval(`getComputedStyle(document.documentElement).getPropertyValue('--card').trim()`)) !== '#ffffff');
     await b.eval(`c('[data-act=theme][data-v=system]'); true`);
     ok('시스템 모드 + OS 라이트 → 라이트', (await theme()) === 'light');
-    await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] }); await sleep(300);
+    await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] }); for (let i = 0; i < 20 && (await theme()) !== 'dark'; i++) await sleep(150); // OS 설정 변경 알림을 최대 3초 기다림
     ok('시스템 모드 + OS 다크 → 다크(자동 따라감)', (await theme()) === 'dark');
     await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
     await b.eval(`c('[data-act=theme][data-v=light]'); c('[data-act=tab][data-v=cal]'); true`);

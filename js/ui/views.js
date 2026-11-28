@@ -68,12 +68,12 @@
             <div class="t"><b>${esc(e.name)}</b><span>${esc(CAT_NAME[e.cat] || '')} · ${e.abv}% · ${esc(qtyLabel(e))} (${Math.round(e.ml)}mL)</span></div>
             <div class="g"><b>${r1(e.g)}g</b><small>순수 알코올</small></div>
             <div class="mini"><button class="mini-btn" data-act="editEntry" data-v="${s}|${e.id}" aria-label="수정">${I.edit}</button><button class="mini-btn danger" data-act="delEntry" data-v="${s}|${e.id}" aria-label="삭제">${I.trash}</button></div></div>`).join('')}`;
-      } else body = `<div class="empty tight">${d.sober ? '금주일로 기록했어요.' : '이 날은 기록이 없어요. 기록하지 않은 날은 금주로 계산하지 않아요.'}</div>`;
+      } else body = `<div class="empty tight">${st === 'sober' ? (d.sober ? '금주일로 기록했어요.' : '기록이 없는 날이라 자동으로 금주일로 처리돼요. 마셨다면 "기록 추가"로 남겨 주세요.') : s === calc.todayS() ? '오늘은 아직 기록이 없어요. 안 마시고 하루가 지나면 자동으로 금주일이 돼요.' : s > calc.todayS() ? '아직 오지 않은 날이에요.' : '첫 기록 전의 날이라 집계하지 않아요.'}</div>`;
       return `<section class="card day-card"><div class="day-head"><span class="round">${I.day}</span><div class="sp"><h3>${niceDate(s)}</h3>${d.memo ? `<small>${esc(d.memo)}</small>` : ''}</div><span class="pill st-${st}">${STATUS_LABEL[st]}</span></div>
         ${body}
         ${photoBlock(s)}
         <div class="btn-row"><button class="btn soft" data-act="addTo" data-v="${s}">${I.plus}기록 추가</button>
-          ${!es.length ? `<button class="btn tint" data-act="sober" data-v="${s}">${I.leaf}${d.sober ? '금주 기록 취소' : '금주일로 기록'}</button>` : ''}
+          ${!es.length && s === calc.todayS() ? `<button class="btn tint" data-act="sober" data-v="${s}">${I.leaf}${d.sober ? '금주 기록 취소' : '오늘 금주로 바로 기록'}</button>` : ''}
           ${bad ? `<button class="btn danger" data-act="warn" data-v="${s}">${I.bell}경고 이유 보기</button>` : ''}</div>
         ${es.length || d.sober ? `<button class="linkbtn" data-act="daySheet" data-v="${s}">시간·증상·메모 ›</button>` : ''}</section>`;
     }
@@ -91,7 +91,7 @@
         <div class="cal-head"><h2>${y}년 ${mo}월</h2><button class="icon-btn" data-act="mon" data-v="-1" aria-label="이전 달">${I.prev}</button><button class="icon-btn" data-act="mon" data-v="1" aria-label="다음 달">${I.next}</button><span class="sp"></span><button class="pill ghost" data-act="monToday">● 오늘</button></div>
         <div class="stat-chips"><span class="chip-stat"><i class="dot"></i>음주 <b>${sm.drink.length}일</b></span><span class="chip-stat tint">${I.leaf}금주 <b>${sm.sober.length}일</b></span><span class="chip-stat">${I.drop}순수 알코올 <b>${r1(sm.total)}g</b></span></div>
         <section class="card cal-card"><div class="wk">${calc.WD.map(w => `<span>${w}</span>`).join('')}</div><div class="grid">${cells}</div>
-          <div class="legend"><span><i class="dot ok"></i>기준 이내</span><span><i class="dot warn"></i>경고</span><span class="lg-chk">${I.check}금주</span><span>미기록은 빈칸</span></div></section>
+          <div class="legend"><span><i class="dot ok"></i>기준 이내</span><span><i class="dot warn"></i>경고</span><span class="lg-chk">${I.check}금주(기록 없는 날은 자동)</span></div></section>
         ${S.sel ? dayCard(S.sel) : ''}
         ${backupBanner()}
         ${goalCard()}
@@ -116,7 +116,7 @@
       const w = stats.weekCompare(store), has = w.cur > 0 || w.prev > 0 || w.sober > 0;
       if (!has) return '';
       return `<section class="card note-card"><span class="round">${I.leaf}</span><div><h4>최근 7일</h4>
-        <p>순수 알코올 <b>${r1(w.cur)}g</b> · 그 앞 7일 ${r1(w.prev)}g${w.pct == null ? '' : ` (${w.pct > 0 ? '+' : ''}${w.pct}%)`}<br>금주로 기록한 날 <b>${w.sober}일</b></p></div></section>`;
+        <p>순수 알코올 <b>${r1(w.cur)}g</b> · 그 앞 7일 ${r1(w.prev)}g${w.pct == null ? '' : ` (${w.pct > 0 ? '+' : ''}${w.pct}%)`}<br>금주한 날 <b>${w.sober}일</b></p></div></section>`;
     }
 
     /* ---------- 기록하기: 주류 선택 ---------- */
@@ -147,12 +147,12 @@
           <div class="chips">${[['오늘', 0], ['어제', -1], ['그제', -2]].map(([n, o]) => { const d = calc.addDays(calc.todayS(), o); return `<button class="chip ${S.recDate === d ? 'on' : ''}" data-act="setRecDate" data-v="${d}">${n}</button>`; }).join('')}
             <label class="chip date-chip ${[0, -1, -2].some(o => calc.addDays(calc.todayS(), o) === S.recDate) ? '' : 'on'}">📅 다른 날짜<input type="date" id="dateIn" value="${S.recDate}" max="${calc.todayS()}"></label></div></div>
         ${es.length || (store.dayOf(S.recDate) && store.dayOf(S.recDate).sober) ? `<div class="today-bar" data-act="daySheet" data-v="${S.recDate}" role="button"><span>이 날 기록 <b>${es.length}건</b> · 순수 알코올 <b>${r1(g)}g</b></span><span class="sp"></span><span>보기 ›</span></div>` : ''}
-        ${!es.length ? `<div class="card sober-card"><div class="sp"><b>${niceDate(S.recDate)}, 술을 안 마셨나요?</b><small>입력을 깜빡했어도 날짜를 골라 금주로 남길 수 있어요.</small></div><button class="btn ${store.dayOf(S.recDate) && store.dayOf(S.recDate).sober ? 'ghost' : ''} sm" data-act="sober" data-v="${S.recDate}">${store.dayOf(S.recDate) && store.dayOf(S.recDate).sober ? '금주 기록 취소' : '금주했어요!'}</button></div>` : ''}
+        ${!es.length && S.recDate === calc.todayS() ? `<div class="card sober-card"><div class="sp"><b>오늘 술을 안 마셨나요?</b><small>하루가 지나면 자동으로 금주일이 되지만, 지금 바로 남길 수도 있어요.</small></div><button class="btn ${store.dayOf(S.recDate) && store.dayOf(S.recDate).sober ? 'ghost' : ''} sm" data-act="sober" data-v="${S.recDate}">${store.dayOf(S.recDate) && store.dayOf(S.recDate).sober ? '금주 기록 취소' : '금주했어요!'}</button></div>` : (!es.length && S.recDate < calc.todayS() ? `<div class="note">기록이 없는 날은 자동으로 금주일로 처리돼요. 이 날 마셨다면 아래에서 고르세요.</div>` : '')}
         <label class="search"><span aria-hidden="true">${I.search}</span><input id="q" type="search" placeholder="주류를 검색해 보세요 (예: 참이슬, 카스)" value="${esc(S.q)}" autocomplete="off"></label>
         <div class="chips">${CATS.map(([k, n]) => `<button class="chip ${S.cat === k && !q ? 'on' : ''}" data-act="cat" data-v="${k}">${n}</button>`).join('')}</div>
         ${body}
         <div class="card add-own"><span class="round">${I.plus}</span><div class="sp"><b>찾으시는 주류가 없나요?</b><small>직접 이름과 도수를 입력하여 추가해 보세요.</small></div><button class="btn white sm" data-act="addCustom">직접 등록</button></div>
-        ${!es.length ? `<button class="btn tint block" data-act="sober" data-v="${S.recDate}">${I.leaf}이 날은 금주했어요 (금주일로 기록)</button>` : ''}`;
+        ${!es.length && S.recDate === calc.todayS() ? `<button class="btn tint block" data-act="sober" data-v="${S.recDate}">${I.leaf}오늘은 금주했어요 (지금 바로 기록)</button>` : ''}`;
     }
 
     /* ---------- 분량 선택 화면 ---------- */
@@ -222,7 +222,7 @@
         ${a && a.level === 'warn' ? `<div class="alert"><h3>⚠ 건강 위험 안내</h3><div class="alert-txt">${a.reasons.map(r => esc(r.text)).join('<br>')}</div><div class="alert-cnt">${(() => { const x = GUIDE.advise({ monthWarn: stats.summarize(store, stats.periodRange('month', 0, s)).warn, yearWarn: stats.summarize(store, stats.periodRange('year', 0, s)).warn }); return `이번 달 ${x.monthWarn}회 · 올해 ${x.yearWarn}회 경고`; })()}</div><button class="btn sm danger mt8" data-act="warn" data-v="${s}">자세히 보기</button></div>` : ''}
         ${a && a.level !== 'warn' ? `<div class="disc">현재 기준에서는 경고 조건에 해당하지 않지만, 음주량이 적다고 건강 위험이 없다는 뜻은 아닙니다. ${esc(GUIDE.SAFE_NOTE)}</div>` : ''}
         <div class="row gap8 mt12"><button class="btn" data-act="addTo" data-v="${s}">＋ 술 추가</button>
-          ${!es.length ? `<button class="btn ghost" data-act="sober" data-v="${s}">${d.sober ? '금주 기록 취소' : '금주일로 기록'}</button>` : ''}</div>
+          ${!es.length && s === calc.todayS() ? `<button class="btn ghost" data-act="sober" data-v="${s}">${d.sober ? '금주 기록 취소' : '오늘 금주로 바로 기록'}</button>` : ''}</div>
         ${es.length || d.sober ? `<h3 class="h-sm">하루 정보 (선택)</h3>
           <div class="two"><label class="field"><span>시작 시간</span><input type="time" data-f="start" value="${esc(d.start || '')}"></label><label class="field"><span>종료 시간</span><input type="time" data-f="end" value="${esc(d.end || '')}"></label></div>
           <div class="field"><span>음주 후 컨디션·증상</span><div class="sym">${GUIDE.SYMPTOMS.map(x => `<button class="chip ${(d.cond || []).includes(x.k) ? 'on' : ''}" data-act="sym" data-v="${s}|${x.k}">${esc(x.label)}</button>`).join('')}</div></div>
@@ -256,25 +256,42 @@
         <button class="btn" data-act="saveCustom">추가하고 기록하기</button>`;
     }
 
-    /* ---------- 통계 ---------- */
-    function barChart(items, thr, thrLabel) {
-      const W = 340, H = 150, pl = 6, pb = 22, n = Math.max(1, items.length), mx = Math.max(10, thr || 0, ...items.map(i => i.v)) * 1.1, bw = Math.max(2, (W - pl * 2) / n - (n > 20 ? 1.5 : 10));
-      const x = i => pl + i * ((W - pl * 2) / n) + ((W - pl * 2) / n - bw) / 2, y = v => H - pb - (H - pb - 8) * v / mx;
-      const bar = tok('--chart-bar', '#b1f0cd'), now = tok('--chart-bar-now', '#125238'), bad = tok('--chart-warn', '#ffb95d'), txt = tok('--chart-text', '#5a645d');
-      return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="기간별 순수 알코올 막대그래프">
-        ${thr ? `<line x1="0" x2="${W}" y1="${y(thr)}" y2="${y(thr)}" stroke="${bad}" stroke-dasharray="4 3"/><text x="${pl}" y="${y(thr) - 4}" font-size="9" fill="${txt}" text-anchor="start">${esc(thrLabel || '참고 기준')} ${Math.round(thr)}g</text>` : ''}
-        ${items.map((it, i) => `<rect x="${x(i)}" y="${y(it.v)}" width="${bw}" height="${Math.max(0, H - pb - y(it.v))}" rx="${Math.min(6, bw / 2)}" fill="${it.warn ? bad : it.now ? now : bar}"/>${it.v > 0 && n <= 12 ? `<text x="${x(i) + bw / 2}" y="${y(it.v) - 3}" font-size="8.500" fill="${txt}" text-anchor="middle">${Math.round(it.v)}</text>` : ''}${it.lab ? `<text x="${x(i) + bw / 2}" y="${H - 6}" font-size="9" fill="${txt}" text-anchor="middle">${it.lab}</text>` : ''}`).join('')}</svg>`;
+    /* ---------- 통계 기간 선택(달력): 몇 년 전 기록도 찾아가 볼 수 있음 ---------- */
+    function rangePicker() {
+      const P = S.pick, kind = S.statP, today = calc.todayS(), ty = +today.slice(0, 4), tm = +today.slice(5, 7), cur = stats.periodRange(kind, S.statOff);
+      const days = store.raw().days, hasD = {}, hasM = {}, hasY = {};
+      Object.keys(days).forEach(d => { if ((days[d].entries || []).length) { hasD[d] = 1; hasM[d.slice(0, 7)] = 1; hasY[d.slice(0, 4)] = 1; } });
+      const dot = k => k ? '<i class="dot ok pk-dot"></i>' : '';
+      const head = t => `<h2>${t}</h2><div class="sub">● 표시는 음주 기록이 있는 ${kind === 'year' ? '해' : kind === 'month' ? '달' : '날'}이에요</div>`;
+      const foot = `<div class="row gap8 mt12"><button class="btn ghost sm" data-act="pickToday">${kind === 'week' ? '이번 주' : kind === 'month' ? '이번 달' : '올해'}로</button><button class="btn ghost sm" data-act="closeSheet">닫기</button></div>`;
+      if (kind === 'year') {
+        const minY = Math.min(ty - 5, ...Object.keys(hasY).map(Number)), ys = []; for (let y = ty; y >= minY; y--) ys.push(y);
+        return head('연도 선택') + `<div class="pick-grid">${ys.map(y => `<button class="pick-btn ${String(y) === cur.from.slice(0, 4) ? 'on' : ''}" data-act="pickYearSel" data-v="${y}">${y}년${dot(hasY[y])}</button>`).join('')}</div>` + foot;
+      }
+      if (kind === 'month') {
+        return head('월 선택') + `<div class="pick-nav"><button class="icon-btn" data-act="pickNav" data-v="-1" aria-label="이전 해">${I.prev}</button><b>${P.y}년</b><button class="icon-btn" data-act="pickNav" data-v="1" aria-label="다음 해" ${P.y >= ty ? 'disabled' : ''}>${I.next}</button></div>
+          <div class="pick-grid">${Array.from({ length: 12 }, (_, i) => i + 1).map(m => { const ym = `${P.y}-${calc.pad(m)}`, fut = P.y > ty || (P.y === ty && m > tm); return `<button class="pick-btn ${ym === cur.from.slice(0, 7) ? 'on' : ''}" data-act="pickMonth" data-v="${ym}" ${fut ? 'disabled' : ''}>${m}월${dot(hasM[ym])}</button>`; }).join('')}</div>` + foot;
+      }
+      // 주: 달력에서 아무 날이나 누르면 그 날이 속한 주(일~토)로 이동
+      const first = new Date(P.y, P.m - 1, 1), last = new Date(P.y, P.m, 0).getDate(); let cells = '';
+      for (let i = 0; i < first.getDay(); i++) cells += '<span class="cell out"></span>';
+      for (let d = 1; d <= last; d++) { const s = `${P.y}-${calc.pad(P.m)}-${calc.pad(d)}`, inr = s >= cur.from && s <= cur.to; cells += `<button class="cell pk ${inr ? 'sel' : ''} ${s === today ? 'today' : ''}" data-act="pickDay" data-v="${s}" ${s > today ? 'disabled' : ''}><span class="d">${d}</span>${dot(hasD[s])}</button>`; }
+      return head('주 선택 · 날짜를 누르세요') + `<div class="pick-nav"><button class="icon-btn" data-act="pickNav" data-v="-1" aria-label="이전 달">${I.prev}</button><b>${P.y}년 ${P.m}월</b><button class="icon-btn" data-act="pickNav" data-v="1" aria-label="다음 달" ${P.y > ty || (P.y === ty && P.m >= tm) ? 'disabled' : ''}>${I.next}</button></div>
+        <div class="wk">${calc.WD.map(w => `<span>${w}</span>`).join('')}</div><div class="grid">${cells}</div>` + foot;
     }
-    function donut(byCat) {
-      const tot = Object.values(byCat).reduce((a, b) => a + b, 0); if (!tot) return '<div class="empty">기록이 없어요.</div>';
-      const col = k => tok('--cat-' + k, tok('--cat-etc', '#c0c9c1')), ink = tok('--ink', '#151d19'), sub = tok('--chart-text', '#5a645d');
-      let a0 = -Math.PI / 2, paths = ''; const R = 52, r = 36, cx = 60, cy = 60, ents = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-      ents.forEach(([k, v]) => { const a1 = a0 + (v / tot) * Math.PI * 2 - 0.0001, big = a1 - a0 > Math.PI ? 1 : 0, P = (R2, a) => [cx + R2 * Math.cos(a), cy + R2 * Math.sin(a)];
-        const [x1, y1] = P(R, a0), [x2, y2] = P(R, a1), [x3, y3] = P(r, a1), [x4, y4] = P(r, a0);
-        paths += ents.length === 1 ? `<circle cx="${cx}" cy="${cy}" r="${(R + r) / 2}" fill="none" stroke="${col(k)}" stroke-width="${R - r}"/>` : `<path d="M${x1} ${y1}A${R} ${R} 0 ${big} 1 ${x2} ${y2}L${x3} ${y3}A${r} ${r} 0 ${big} 0 ${x4} ${y4}Z" fill="${col(k)}"/>`; a0 = a1 + 0.0001; });
-      const top = ents[0];
-      return `<div class="donut-row"><svg viewBox="0 0 120 120" width="132" height="132" role="img" aria-label="주종별 비율 도넛그래프">${paths}<text x="60" y="54" text-anchor="middle" font-size="7.500" fill="${sub}">주력 주종</text><text x="60" y="68" text-anchor="middle" font-size="13" font-weight="800" fill="${ink}">${CAT_NAME[top[0]] || top[0]}</text><text x="60" y="80" text-anchor="middle" font-size="8" fill="${sub}">${Math.round(top[1] / tot * 100)}%</text></svg>
-        <div class="legend-col">${ents.map(([k, v]) => `<div class="lg-row"><i style="background:${col(k)}"></i><span class="sp">${CAT_NAME[k] || k}</span><b>${r1(v)}g</b><small>(${Math.round(v / tot * 100)}%)</small></div>`).join('')}</div></div>`;
+
+    /* ---------- 통계 ---------- */
+    /** 지난 기간과 비교: 항목마다 지난 기간(회색) vs 이번 기간(색) 막대 + 늘었는지·줄었는지 한 줄 */
+    function compareCard(rows, prevName, hasPrev) {
+      if (!hasPrev) return `<div class="empty tight">${prevName} 기록이 없어 비교할 수 없어요.</div>`;
+      return rows.map(x => {
+        const diff = Math.round((x.cur - x.prev) * 10) / 10, mx = Math.max(x.cur, x.prev, 1), dir = diff === 0 ? 'same' : diff > 0 ? 'up' : 'down';
+        const good = diff === 0 ? '' : (dir === 'up') === !!x.moreIsGood ? 'good' : 'bad', pct = x.prev ? Math.round(Math.abs(diff) / x.prev * 100) : null;
+        const word = diff === 0 ? '같아요' : `${dir === 'up' ? '▲ 늘었어요' : '▼ 줄었어요'} (${diff > 0 ? '+' : '−'}${Math.abs(diff)}${x.unit}${pct != null ? ', ' + pct + '%' : ''})`;
+        return `<div class="cmp"><div class="cmp-h"><b>${x.label}</b><span class="cmp-d ${good}">${word}</span></div>
+          <div class="cmp-bar"><span>${prevName}</span><div class="trk"><i class="prev" style="width:${Math.max(2, x.prev / mx * 100)}%"></i></div><em>${x.prev}${x.unit}</em></div>
+          <div class="cmp-bar"><span>${x.curName}</span><div class="trk"><i class="cur ${good}" style="width:${Math.max(2, x.cur / mx * 100)}%"></i></div><em>${x.cur}${x.unit}</em></div></div>`;
+      }).join('');
     }
     function lineChart(pts) {
       const W = 340, H = 130, mx = Math.max(10, ...pts.map(p => p.v)) * 1.15, n = pts.length, X = i => 16 + i * (W - 32) / Math.max(1, n - 1), Y = v => H - 22 - (H - 34) * v / mx;
@@ -285,31 +302,25 @@
     function statsView() {
       const r = stats.periodRange(S.statP, S.statOff), s = stats.summarize(store, r), ps = stats.summarize(store, stats.periodRange(S.statP, S.statOff - 1));
       const lim = GUIDE.thresholds(store.profile), today = calc.todayS();
-      let items, chartTitle, thr = null, thrLabel = '';
-      if (S.statP === 'year') { chartTitle = '월별 순수 알코올'; items = Array.from({ length: 12 }, (_, m) => { const y = r.from.slice(0, 4); let v = 0; stats.daysIn({ from: `${y}-${calc.pad(m + 1)}-01`, to: calc.fmt(new Date(+y, m + 1, 0)) }).forEach(d => v += store.gOf(d)); return { v, lab: m + 1 }; }); }
-      else if (S.statP === 'month') {
-        chartTitle = '주차별 순수 알코올'; thr = lim.weekG; thrLabel = '주간 참고 기준';
-        items = []; for (let i = 0; i < s.days.length; i += 7) { const ds = s.days.slice(i, i + 7), v = ds.reduce((a, d) => a + store.gOf(d), 0); items.push({ v, lab: `${i / 7 + 1}주차`, warn: v > lim.weekG, now: ds.includes(today) && !(v > lim.weekG) }); }
-      } else { chartTitle = '요일별 순수 알코올'; thr = lim.dayG; thrLabel = '하루 참고 기준'; items = s.days.map(d => ({ v: store.gOf(d), lab: calc.WD[calc.parse(d).getDay()], warn: store.entriesOf(d).length && store.analyze(d).level === 'warn', now: d === today })); }
       const delta = stats.changePct(s.total, ps.total), prevName = S.statP === 'week' ? '지난주' : S.statP === 'month' ? '지난달' : '작년';
       const wk = stats.weeklySeries(store, 12).map(p => ({ v: p.v, lab: (calc.parse(p.end).getMonth() + 1) + '/' + calc.parse(p.end).getDate() }));
       const prods = Object.values(s.byProd).sort((a, b) => b.g - a.g).slice(0, 3), mxp = prods[0] ? prods[0].g : 1;
       const rate = s.days.length ? Math.round(s.drink.length / s.days.length * 100) : 0;
-      const insight = !s.drink.length ? '이 기간에 기록된 음주가 없어요.' : ps.total ? `${prevName}보다 총 순수 알코올이 ${Math.abs(delta)}% ${delta < 0 ? '줄었어요' : delta > 0 ? '늘었어요' : '같아요'}.` : `${prevName} 기록이 없어 비교할 수 없어요.`;
+      const elapsed = s.days.filter(d => d <= today).length, cm = GUIDE.periodComment({ now: S.statOff === 0, kind: S.statP, label: r.label, elapsedDays: elapsed, drinkDays: s.drink.length, soberDays: s.sober.length, total: s.total, warnDays: s.warn, abvAvg: s.abvAvg, th: lim });
+      const hasPrev = ps.drink.length > 0 || ps.sober.length > 0, curName = S.statOff === 0 ? (S.statP === 'week' ? '이번 주' : S.statP === 'month' ? '이번 달' : '올해') : '선택 기간';
+      const rows = [{ label: '순수 알코올', cur: r1(s.total), prev: r1(ps.total), unit: 'g' }, { label: '마신 날', cur: s.drink.length, prev: ps.drink.length, unit: '일' }, { label: '경고', cur: s.warn, prev: ps.warn, unit: '회' }, { label: '금주한 날', cur: s.sober.length, prev: ps.sober.length, unit: '일', moreIsGood: true }].map(x => Object.assign(x, { curName }));
+      const trend = !hasPrev ? '' : ps.total ? `${prevName}보다 순수 알코올 ${delta === 0 ? '변화 없음' : (delta > 0 ? '+' : '−') + Math.abs(delta) + '%'}` : `${prevName}에는 마신 기록이 없어요`;
       const kpi = (label, val, unit, sub, ic, cls) => `<div class="kpi ${cls || ''}"><div class="kpi-top"><small>${label}</small>${ic ? `<span class="kic">${I[ic]}</span>` : ''}</div><b>${val}</b>${unit ? `<em>${unit}</em>` : ''}${sub ? `<small class="ks">${sub}</small>` : ''}</div>`;
       return `${topbar()}
         <div class="page-head"><div><small>밸런스 리포트</small><h1>음주 통계</h1></div><div class="seg">${[['week', '주'], ['month', '월'], ['year', '년']].map(([k, n]) => `<button class="${S.statP === k ? 'on' : ''}" data-act="statP" data-v="${k}">${n}</button>`).join('')}</div></div>
-        <div class="range-nav"><button class="icon-btn" data-act="statOff" data-v="-1" aria-label="이전">${I.prev}</button><span class="range-label">${I.cal}${r.label}</span><button class="icon-btn" data-act="statOff" data-v="1" aria-label="다음" ${S.statOff >= 0 ? 'disabled' : ''}>${I.next}</button></div>
-        <section class="card note-card soft"><span class="round">${I.leaf}</span><div><h4>${esc(r.label)} 요약</h4><p>${esc(insight)}</p></div></section>
-        <div class="kpis">${kpi('총 음주 횟수', s.drink.length, '회', `기간 중 ${rate}%`, 'glass')}${kpi('총 순수 알코올', r1(s.total), 'g', '', 'drop')}
-          ${kpi('음주일 평균', r1(s.avg), 'g/일', '음주한 날 기준', 'day')}${kpi('경고 횟수', s.warn, '회', s.warn ? '이유는 캘린더에서 확인' : '경고 없음', 'bell', s.warn ? 'warn' : '')}
-          ${kpi('금주 기록일', s.sober.length, '일', '직접 기록한 날만 집계', 'check')}${kpi(prevName + ' 대비', delta == null ? '–' : (delta > 0 ? '+' : '') + delta, delta == null ? '' : '%', ps.total ? `${r1(Math.abs(s.total - ps.total))}g ${s.total < ps.total ? '덜' : '더'} 마셨어요` : '비교할 기록 없음', 'stats')}
-          ${kpi('최장 연속 음주', s.maxDrink, '일', '', 'glass')}${kpi('최장 연속 금주', s.maxSober, '일', '금주 기록 기준', 'leaf')}</div>
-        <div class="stat-grid"><section class="card"><h3 class="card-h">${chartTitle}</h3>${barChart(items, thr, thrLabel)}</section>
-        <section class="card"><h3 class="card-h">주종별 알코올 비율</h3>${donut(s.byCat)}</section>
+        <div class="range-nav"><button class="icon-btn" data-act="statOff" data-v="-1" aria-label="이전">${I.prev}</button><button class="range-label" data-act="rangePick" aria-label="기간 선택 달력 열기">${I.cal}${r.label}<small class="rl-hint">달력 열기 ▾</small></button><button class="icon-btn" data-act="statOff" data-v="1" aria-label="다음" ${S.statOff >= 0 ? 'disabled' : ''}>${I.next}</button></div>
+        <section class="card note-card soft tone-${cm.tone}"><span class="round">${I.leaf}</span><div><h4>${esc(r.label)} 요약</h4><p class="cmt">${esc(cm.text)}</p>${trend ? `<small class="sub">${esc(trend)}${s.abvAvg != null ? ` · 평균 도수 ${r1(s.abvAvg)}%` : ''}</small>` : (s.abvAvg != null ? `<small class="sub">평균 도수 ${r1(s.abvAvg)}%</small>` : '')}</div></section>
+        <div class="kpis four">${kpi('음주 횟수', s.drink.length, '회', `기간 중 ${rate}%`, 'glass')}${kpi('순수 알코올', r1(s.total), 'g', '', 'drop')}
+          ${kpi('경고', s.warn, '회', s.warn ? '이유는 캘린더에서' : '경고 없음', 'bell', s.warn ? 'warn' : '')}${kpi('금주 기록', s.sober.length, '일', '', 'check')}</div>
+        <div class="stat-grid"><section class="card"><h3 class="card-h">${prevName}과 비교</h3><p class="card-p">${hasPrev ? '회색은 ' + prevName + ', 색 막대는 ' + curName + '이에요' : ''}</p>${compareCard(rows, prevName, hasPrev)}</section>
         <section class="card"><h3 class="card-h">음주 습관 변화 추이</h3><p class="card-p">최근 12주, 7일 합계(g)</p>${lineChart(wk)}</section>
         <section class="card"><h3 class="card-h">자주 마신 제품 TOP 3</h3>${prods.length ? prods.map((p, i) => `<div class="top-row"><span class="ptile xs">${img(p.icon, 1, { h: SIZE.stat, shadowRx: 9 })}</span><div class="sp"><div class="top-t"><b>${i + 1}. ${esc(p.name)}</b><b>${r1(p.g)}g</b></div><small>${esc(CAT_NAME[p.cat] || '')} · 총 ${p.n}회 기록</small><div class="bar"><i style="width:${p.g / mxp * 100}%"></i></div></div></div>`).join('') : '<div class="empty">기록이 없어요.</div>'}</section></div>
-        <div class="disc">기록하지 않은 날은 금주일로 계산하지 않습니다. 금주일은 직접 "금주일로 기록"을 눌러야 집계됩니다.</div>`;
+        <div class="disc">기록하지 않은 날은 첫 기록일 이후부터 자동으로 금주일로 계산해요(오늘은 하루가 끝나야 반영). 마신 날을 기록하지 않으면 금주로 잘못 집계될 수 있어요.</div>`;
     }
 
     /* ---------- 리포트 ---------- */
@@ -325,7 +336,7 @@
         <div class="kpis">${kpi('이번 달 순수 알코올', r1(s.total), 'g', delta == null ? '' : `전월 대비 ${delta > 0 ? '+' : ''}${delta}%`, 'drop')}
           ${kpi('최근 7일 합계', r1(w.cur), 'g', w.cur > lim.weekG ? '주간 참고 기준 초과' : '주간 참고 기준 이내', 'day', w.cur > lim.weekG ? 'warn' : '')}
           ${kpi('음주일 / 경고', `${s.drink.length}<small class="slash">일 / ${s.warn}회</small>`, '', '', 'glass', s.warn ? 'warn' : '')}
-          ${kpi('현재 연속 금주', sober, '일째', sober ? '금주 기록 기준' : '', 'leaf')}</div>
+          ${kpi('현재 연속 금주', sober, '일째', sober ? '기록 없는 날 포함' : '', 'leaf')}</div>
         <section class="card"><h3 class="card-h">몸에 미치는 영향 <small>공식 지침 기반 참고 정보</small></h3>${GUIDE.TOPICS.map(t => `<div class="topic"><div class="em">${t.emoji}</div><div><h4>${esc(t.title)}</h4><p>${esc(t.text)}</p>${rep.notes[t.k] ? `<p class="topic-note">${esc(rep.notes[t.k])}</p>` : ''}</div></div>`).join('')}</section>
         <section class="card"><h3 class="card-h">음주 판단 기준</h3><p class="card-p">현재 설정: ${esc(lim.label)}</p><ul class="crit">${GUIDE.CRITERIA.map(c => `<li>${esc(c.text)} <span class="sub">(${esc(c.org)}${c.year ? ', ' + esc(c.year) : ''})</span></li>`).join('')}</ul></section>
         <section class="card"><h3 class="card-h">출처</h3><div class="src">${srcList(GUIDE.SOURCES)}</div></section>
@@ -354,16 +365,34 @@
         <div class="disc">${esc(GUIDE.DISCLAIMER)}</div>`;
     }
 
+    /* ---------- 첫 실행: ① 로그인(선택) → ② 내 정보. 한 번 끝내면 다시 묻지 않음 ---------- */
+    function onboard() {
+      const pf = store.profile, step = ctx.onboardStep(), inv = ctx.pendingInvite();
+      if (step === 'login') return `<div class="onboard"><div class="ob-logo">🍃</div><div class="ob-step">1 / 2</div><h1>드링크 밸런스에 오신 걸 환영해요</h1>
+        <p class="sub">로그인하면 기록과 사진이 내 계정에 안전하게 보관되고 친구와 공유할 수 있어요. 처음 한 번만 하면 돼요.</p>${inv ? `<div class="note">친구 초대를 받으셨네요(코드 ${esc(inv)}). 로그인하면 이어서 친구 요청을 보낼 수 있어요.</div>` : ''}
+        <label class="field"><span>이메일</span><input id="emailIn" type="email" autocomplete="email" placeholder="you@example.com"></label>
+        <label class="field"><span>비밀번호 (6자 이상)</span><input id="pwIn" type="password" autocomplete="current-password"></label>
+        <div class="row gap8"><button class="btn" data-act="login">로그인</button><button class="btn ghost" data-act="signup">새로 가입</button></div>
+        <button class="linkbtn" data-act="obSkip">로그인 없이 이 기기에서만 쓰기 ›</button></div>`;
+      return `<div class="onboard"><div class="ob-logo">🍃</div><div class="ob-step">${ctx.cloud && ctx.cloud.configured ? '2 / 2' : '시작하기 전에'}</div><h1>내 정보를 알려 주세요</h1>
+        <p class="sub">음주 위험 기준(하루·주간 참고 기준)을 나에게 맞추는 데만 써요. 모두 선택이고, 나중에 설정에서 바꿀 수 있어요.</p>
+        <div class="field"><span>성별</span><div class="chips">${[['female', '여성'], ['male', '남성'], ['unset', '선택 안 함']].map(([k, n]) => `<button class="chip ${pf.sex === k ? 'on' : ''}" data-act="sex" data-v="${k}">${n}</button>`).join('')}</div></div>
+        <label class="field"><span>나이 (선택)</span><input id="ageIn" inputmode="numeric" value="${esc(pf.age)}" placeholder="예: 34"></label>
+        ${pf.sex !== 'male' ? `<label class="chk"><input type="checkbox" id="pregIn" ${pf.pregnant ? 'checked' : ''}> 임신 중이거나 임신을 계획 중입니다</label>` : ''}
+        <div class="note">${ctx.cloud && ctx.cloud.loggedIn ? '이 정보는 내 계정에 저장돼요. 친구에게는 성별만 보이고, 나이·임신 정보는 공유되지 않아요.' : '이 정보는 이 기기에만 저장돼요.'}</div>
+        <button class="btn block" data-act="obDone">시작하기</button></div>`;
+    }
+
     /* ---------- 계정·친구 (클라우드) ---------- */
     function accountCard() {
       const c = ctx.cloud;
-      if (!c || !c.configured) return '<section class="card"><h3 class="card-h">계정·친구</h3><div class="note">클라우드 연결이 아직 설정되지 않았어요. 연결하면 로그인해서 기록·사진을 계정에 보관하고 친구와 공유할 수 있어요.</div></section>';
-      if (!c.loggedIn) return `<section class="card"><h3 class="card-h">계정·친구</h3><div class="note">로그인하면 기록과 사진이 내 계정(클라우드)에 보관되고, 친구에게 <b>기록·메모·컨디션·사진·성별 설정</b>이 보여요. 임신·나이 설정은 공유되지 않아요. 로그인하지 않으면 지금처럼 이 기기에만 저장돼요.</div>
+      if (!c || !c.configured) return '<section class="card"><div class="card-h-row"><h3 class="card-h">친구 추가</h3><button class="plus-btn" data-act="shareInvite" aria-label="친구 초대 링크 보내기" title="친구 초대 링크 보내기">＋</button></div><div class="note">＋ 버튼으로 앱 링크를 친구에게 보낼 수 있어요. 클라우드 연결이 아직 설정되지 않아, 로그인과 친구 기록 보기는 연결 후에 쓸 수 있어요.</div></section>';
+      if (!c.loggedIn) return `<section class="card"><div class="card-h-row"><h3 class="card-h">친구 추가</h3><button class="plus-btn" data-act="shareInvite" aria-label="친구 초대 링크 보내기" title="친구 초대 링크 보내기">＋</button></div><div class="note">＋ 버튼으로 앱 링크를 친구에게 보낼 수 있어요. 로그인하면 기록과 사진이 내 계정(클라우드)에 보관되고, 친구에게 <b>기록·메모·컨디션·사진·성별 설정</b>이 보여요. 임신·나이 설정은 공유되지 않아요. 로그인하지 않으면 지금처럼 이 기기에만 저장돼요.</div>
         <label class="field"><span>이메일</span><input id="emailIn" type="email" autocomplete="email" placeholder="you@example.com"></label>
         <label class="field"><span>비밀번호 (6자 이상)</span><input id="pwIn" type="password" autocomplete="current-password"></label>
         <div class="row gap8"><button class="btn sm" data-act="login">로그인</button><button class="btn ghost sm" data-act="signup">새로 가입</button></div></section>`;
       const p = S.acct.profile || {}, hasStash = (() => { try { return !!root.localStorage.getItem(DB.api.BACKUP_KEY); } catch (e) { return false; } })();
-      return `<section class="card"><h3 class="card-h">계정·친구</h3><div class="note">로그인: <b>${esc(c.session.user.email)}</b></div>
+      return `<section class="card"><div class="card-h-row"><h3 class="card-h">친구 추가</h3><button class="plus-btn" data-act="shareInvite" aria-label="친구 초대 링크 보내기" title="친구 초대 링크 보내기">＋</button></div><div class="note">＋ 버튼을 누르면 <b>내 친구 코드가 담긴 초대 링크</b>를 보낼 수 있어요. 로그인: <b>${esc(c.session.user.email)}</b></div>
         <div class="field"><span>내 친구 코드 (친구에게 알려 주세요)</span><div class="fcode-row"><b class="fcode">${esc(p.friend_code || '불러오는 중…')}</b><button class="btn ghost sm" data-act="copyCode">복사</button></div></div>
         <label class="field"><span>표시 이름 (친구에게 보이는 이름)</span><input id="nameIn" maxlength="20" value="${esc(p.display_name || '')}" placeholder="예: 민수"></label>
         <div class="row gap8 wrap"><button class="btn sm" data-act="saveName">이름 저장</button><button class="btn soft sm" data-act="friendsTab">👥 친구 보기</button><button class="btn ghost sm" data-act="logout">로그아웃</button>${hasStash ? '<button class="btn ghost sm" data-act="exportStash">이 기기 기록 내려받기</button>' : ''}</div></section>`;
@@ -395,15 +424,15 @@
       const list = fr.list || [], acc = list.filter(f => f.status === 'accepted'), inc = list.filter(f => f.status === 'pending' && f.direction === 'incoming'), out = list.filter(f => f.status === 'pending' && f.direction === 'outgoing');
       const row = (f, btns) => `<div class="ent"><div class="t"><b>${esc(f.name)}</b><span>코드 ${esc(f.code)}</span></div>${btns}</div>`;
       return `<div class="sc-head"><button class="icon-btn x" data-act="tab" data-v="set" aria-label="뒤로">${I.back}</button><span>친구</span></div>
-        <section class="card"><h3 class="card-h">친구 추가</h3><div class="note">친구에게 받은 친구 코드를 입력하세요. 상대가 수락하면 서로의 기록과 사진이 보여요.</div>
-          <div class="row gap8"><input id="fcode" class="grow" placeholder="친구 코드" autocapitalize="characters" autocomplete="off"><button class="btn sm" data-act="friendAdd">요청 보내기</button></div></section>
+        <section class="card"><div class="card-h-row"><h3 class="card-h">친구 추가</h3><button class="plus-btn" data-act="shareInvite" aria-label="친구 초대 링크 보내기" title="친구 초대 링크 보내기">＋</button></div><div class="note">친구에게 받은 친구 코드를 입력하세요. 초대 링크로 들어오면 코드가 자동으로 입력돼요. 상대가 수락하면 서로의 기록과 사진이 보여요.</div>
+          <div class="row gap8"><input id="fcode" class="grow" placeholder="친구 코드" value="${esc(fr.prefill || '')}" autocapitalize="characters" autocomplete="off"><button class="btn sm" data-act="friendAdd">요청 보내기</button></div></section>
         ${fr.err ? `<div class="alert"><div class="alert-txt">${esc(fr.err)}</div></div>` : ''}
         ${inc.length ? `<section class="card"><h3 class="card-h">받은 요청</h3>${inc.map(f => row(f, `<button class="btn sm" data-act="friendAccept" data-v="${f.friend_id}">수락</button><button class="btn ghost sm" data-act="friendRemove" data-v="${f.friend_id}">거절</button>`)).join('')}</section>` : ''}
         <section class="card"><h3 class="card-h">내 친구 (${acc.length})</h3>${acc.length ? acc.map(f => row(f, `<button class="btn soft sm" data-act="friendOpen" data-v="${f.friend_id}">기록 보기</button><button class="btn ghost sm" data-act="friendRemove" data-v="${f.friend_id}">끊기</button>`)).join('') : `<div class="empty tight">${fr.list ? '아직 친구가 없어요.' : '불러오는 중…'}</div>`}</section>
         ${out.length ? `<section class="card"><h3 class="card-h">보낸 요청</h3>${out.map(f => row(f, `<span class="sub">수락 대기 중</span><button class="btn ghost sm" data-act="friendRemove" data-v="${f.friend_id}">취소</button>`)).join('')}</section>` : ''}`;
     }
 
-    return { fphotoView, friends, photoView, nav, cal, rec, amount, amountLive, day, warn, custom, stats: statsView, report, settings };
+    return { onboard, rangePicker, fphotoView, friends, photoView, nav, cal, rec, amount, amountLive, day, warn, custom, stats: statsView, report, settings };
   }
   DB.createViews = createViews;
 })(typeof window !== 'undefined' ? window : globalThis);

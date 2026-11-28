@@ -128,13 +128,44 @@
     if (m.maxDrink >= 3) notes.repeat = `이번 달 최장 ${m.maxDrink}일 연속 음주가 기록되었습니다 (앱 자체 규칙 기준).`;
     if (m.drink.length >= 2 && m.total / m.drink.length > th.dayG) notes.heart = '음주일 평균이 하루 참고 기준을 넘었습니다. 과도한 음주는 심혈관 위험을 높이므로 횟수와 양을 줄이는 계획을 세워 보세요.';
     let headline, body;
-    if (!m.drink.length && !m.sober.length) { headline = '이번 달 기록이 아직 없어요'; body = '기록하지 않은 날은 금주일로 계산하지 않습니다. 음주일과 금주일을 기록하면 이곳에서 요약을 볼 수 있어요.'; }
-    else if (!m.drink.length) { headline = '이번 달 음주 기록이 없어요'; body = `금주를 기록한 날은 ${m.sober.length}일입니다. 기록하지 않은 날은 집계에 포함되지 않습니다. ${SAFE_NOTE}`; }
+    if (!m.drink.length && !m.sober.length) { headline = '이번 달 기록이 아직 없어요'; body = '음주를 기록하면 이곳에서 요약을 볼 수 있어요. 기록하지 않은 날은 첫 기록일 이후부터 자동으로 금주일로 계산돼요.'; }
+    else if (!m.drink.length) { headline = '이번 달 음주 기록이 없어요'; body = `금주한 날은 ${m.sober.length}일입니다(기록하지 않은 날은 자동으로 금주일로 계산). ${SAFE_NOTE}`; }
     else if (m.warn > 0) { headline = `이번 달 경고 기준에 해당한 날이 ${m.warn}회 있어요`; body = `음주일은 ${m.drink.length}일, 순수 알코올 합계는 ${r1(m.total)}g입니다. 경고 이유와 권장 행동은 캘린더의 빨간 표시를 눌러 확인하세요.`; }
     else { headline = '이번 달 참고 기준을 넘은 날은 없어요'; body = `음주일은 ${m.drink.length}일, 순수 알코올 합계는 ${r1(m.total)}g입니다. 기준 미만이라는 것이 건강 위험이 없다는 뜻은 아닙니다. ${SAFE_NOTE}`; }
     return { headline, body, notes };
   }
 
-  const api = { thresholds, analyzeDay, report, advise, SOURCES, CRITERIA, SYMPTOMS, RISKS, RISK_SRC, PAPERS, PAPER_NOTE, EMERGENCY, SAFE_NOTE, DISCLAIMER, TOPICS };
+  /** 통계 화면 맨 위 한 줄 코멘트. 마신 빈도(음주일 비율)·양(주 평균 g)·경고일·평균 도수에 따라 칭찬/주의 문구를 고름.
+   *  c: { now:boolean(진행 중인 기간인가), kind:'week'|'month'|'year', label, elapsedDays, drinkDays, soberDays, total, warnDays, abvAvg, th:{weekG} }
+   *  같은 기간에는 항상 같은 문구, 기간이 바뀌면 다른 문구가 나오도록 label 로 변형을 고름. 의학적 진단·안전 보장 표현은 쓰지 않음(앱 자체 기준) */
+  function periodComment(c) {
+    const T = c.now ? { week: '이번 주', month: '이번 달', year: '올해' }[c.kind] : { week: '그 주', month: '그 달', year: '그해' }[c.kind];
+    const el = Math.max(1, c.elapsedDays || 1), rate = (c.drinkDays || 0) / el, weekly = (c.total || 0) / (Math.max(el, 7) / 7), wk = c.th && c.th.weekG ? c.th.weekG : 56;
+    const seed = String(c.label || '').split('').reduce((a, ch) => a + ch.charCodeAt(0), 0), pick = list => list[seed % list.length];
+    const abv = c.abvAvg != null ? Math.round(c.abvAvg * 10) / 10 : null, D = c.drinkDays || 0, S = c.soberDays || 0, W = c.warnDays || 0;
+    if (!D && !S) return { tone: 'none', text: '아직 이 기간의 기록이 없어요. 마신 날과 금주한 날을 남기면 코멘트를 드릴게요.' };
+    if (!D) return { tone: 'good', text: pick([`${T}은 술을 한 번도 안 마셨어요. 금주 ${S}일, 정말 잘 지키셨어요!`, `${T} 금주를 ${S}일 기록했어요. 대단해요, 이 흐름을 이어 가 보세요.`, `${T}은 마신 날이 없어요. 꾸준한 금주, 칭찬해요!`]) };
+    let tone, text;
+    if (W >= 4 || rate >= 0.5 || weekly > wk * 2) {
+      tone = 'alert';
+      text = pick([`${T} ${D}일 마셨고 경고 기준을 넘은 날이 ${W}일이에요. 마시는 날과 양을 줄이는 걸 목표로 해 보세요.`, `${T}은 자주, 그리고 많이 마셨어요(${D}일). 쉬는 날을 먼저 늘려 보세요.`, `음주가 잦았어요(${D}일, 경고 ${W}일). 이번엔 양과 횟수를 줄이는 데 집중해 보세요.`]);
+    } else if (W >= 1 || weekly > wk) {
+      tone = 'warn';
+      text = pick([`경고 기준을 넘은 날이 ${W}일 있어요. 한 번에 마시는 양을 조금 줄여 보세요.`, `${T}은 ${D}일 마셨고 일부는 기준을 넘었어요. 마시는 양을 줄이면 좋아요.`, `기준을 넘긴 날이 ${W}일이에요. 다음엔 한두 잔 덜 마셔 보세요.`]);
+    } else if (rate <= 0.2 && weekly <= wk * 0.5) {
+      tone = 'good';
+      text = pick([`마신 날이 ${D}일뿐이에요. 절제를 잘 하고 계세요!`, `${T}은 ${D}일만 마시고 기준도 잘 지켰어요. 훌륭해요.`, `적게 마시고 있어요(${D}일).${S ? ` 금주 ${S}일도 기록했어요.` : ''} 잘하고 계세요!`]);
+    } else {
+      tone = 'ok';
+      text = pick([`경고 기준은 넘지 않았지만 ${D}일 마셨어요. 쉬는 날을 조금 더 늘려 보세요.`, `기준 안에서 마셨어요(${D}일). 지금처럼 조절해 보세요.`, `${T}은 ${D}일 마셨고 기준 안이었어요. 쉬는 날이 늘면 더 좋아요.`]);
+    }
+    if (abv != null && D) {
+      if (abv >= 15) text += ` 평균 도수 ${abv}%로 센 술 위주예요. 같은 양이어도 알코올이 많아요.`;
+      else if (abv <= 6 && (tone === 'warn' || tone === 'alert')) text += ` 도수는 낮아도(평균 ${abv}%) 양이 많으면 알코올 총량이 금방 늘어요.`;
+    }
+    return { tone, text };
+  }
+
+  const api = { thresholds, analyzeDay, report, advise, periodComment, SOURCES, CRITERIA, SYMPTOMS, RISKS, RISK_SRC, PAPERS, PAPER_NOTE, EMERGENCY, SAFE_NOTE, DISCLAIMER, TOPICS };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else (root.DB = root.DB || {}).guide = api;
 })(typeof window !== 'undefined' ? window : globalThis);

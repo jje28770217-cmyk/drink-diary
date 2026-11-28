@@ -44,6 +44,11 @@
     return [...m.values()];
   }
 
-  const api = { pad, fmt, parse, addDays, todayS, WD, niceDate, TYPE_LABEL, FRACS, ALCOHOL_DENSITY, gramOf, r1, r2, ukey, isPreset, fmtQty, qtyLabel, sumG, weekSum, streak, aggregate };
+  /** 친구 초대 링크: 주소 뒤에 ?friend=친구코드 를 붙임(코드가 없으면 앱 주소만). 이미 붙은 쿼리·해시는 지움 */
+  const inviteUrl = (base, code) => { const u = String(base || '').split('#')[0].split('?')[0]; return code ? u + '?friend=' + encodeURIComponent(String(code).trim().toUpperCase()) : u; };
+  /** 주소의 ?friend=코드 에서 코드를 꺼냄(영문·숫자 4~16자만 인정, 대문자로). 없으면 null */
+  const inviteCode = search => { const m = /[?&]friend=([A-Za-z0-9]{4,16})(?:&|$)/.exec(String(search || '')); return m ? m[1].toUpperCase() : null; };
+
+  const api = { inviteUrl, inviteCode, pad, fmt, parse, addDays, todayS, WD, niceDate, TYPE_LABEL, FRACS, ALCOHOL_DENSITY, gramOf, r1, r2, ukey, isPreset, fmtQty, qtyLabel, sumG, weekSum, streak, aggregate };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else (root.DB = root.DB || {}).calc = api;
 })(typeof window !== 'undefined' ? window : globalThis);

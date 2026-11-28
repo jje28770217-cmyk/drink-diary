@@ -6,7 +6,7 @@
 
   const ICON_BASE = { 'johnnie-walker-red': 'johnnie-walker' };
 
-  function blank() { return { v: 1, days: {}, fav: [], recent: [], overrides: {}, custom: [], profile: { sex: 'unset', age: '', pregnant: false }, goals: { weekDays: null, weekG: null } }; }
+  function blank() { return { v: 1, days: {}, fav: [], recent: [], overrides: {}, custom: [], profile: { sex: 'unset', age: '', pregnant: false, onboarded: false }, goals: { weekDays: null, weekG: null } }; }
   function normalize(s) {
     const b = blank();
     if (!s || typeof s !== 'object' || typeof s.days !== 'object') return b;
@@ -19,12 +19,12 @@
   function createStore(o) {
     const calc = dep('calc');
     const { adapter, products, guide } = o;
-    let state = blank(), saveTimer = null, saving = Promise.resolve();
+    let state = blank(), saveTimer = null, saving = Promise.resolve(), firstCache;   // firstCache: 첫 기록일 캐시(undefined 면 다시 계산)
 
     /* ---------- 저장 ---------- */
-    async function load() { state = normalize(await adapter.load()); return state; }
+    async function load() { state = normalize(await adapter.load()); firstCache = undefined; return state; }
     function persist() { // 변경이 잦아도 한 번에 저장
-      clearTimeout(saveTimer);
+      firstCache = undefined; clearTimeout(saveTimer);
       saveTimer = setTimeout(flush, 150);
     }
     function flush() {
@@ -63,6 +63,19 @@
     const weekSum = s => calc.weekSum(entriesOf, s);
     const streak = s => calc.streak(entriesOf, s);
     const isRecorded = s => entriesOf(s).length > 0 || !!(state.days[s] && state.days[s].sober);
+    /** 처음 음주 또는 금주를 기록한 날(자동 금주는 이 날부터 셈. 앱을 쓰기 전의 날은 금주로 세지 않음) */
+    function firstRecordDate() {
+      if (firstCache === undefined) { let m = null; for (const d in state.days) { const v = state.days[d]; if ((v.entries && v.entries.length) || v.sober) if (m === null || d < m) m = d; } firstCache = m; }
+      return firstCache;
+    }
+    /** 금주일: 음주 기록이 없고, ① 직접 금주로 기록했거나 ② 첫 기록일 이후 "오늘 이전"인 날(기록하지 않으면 자동 금주). 오늘은 하루가 끝나야 자동 금주가 됨 */
+    function isSober(s, today) {
+      today = today || calc.todayS();
+      if (entriesOf(s).length) return false;
+      if (state.days[s] && state.days[s].sober) return true;
+      const f = firstRecordDate(); return !!f && s >= f && s < today;
+    }
+    const isAutoSober = (s, today) => isSober(s, today) && !(state.days[s] && state.days[s].sober);
     /** 하루 위험도 분석 (공식 지침 기반 참고 정보) */
     function analyze(s) {
       const day = state.days[s] || {};
@@ -70,9 +83,9 @@
     }
 
     /** 캘린더 표시용 날짜 상태: 'warn'(경고) | 'ok'(기록 있음·경고 없음) | 'sober'(금주 기록) | 'none'(미기록) */
-    function dayStatus(s) {
+    function dayStatus(s, today) {
       if (entriesOf(s).length) return analyze(s).level === 'warn' ? 'warn' : 'ok';
-      return state.days[s] && state.days[s].sober ? 'sober' : 'none';
+      return isSober(s, today) ? 'sober' : 'none';
     }
 
     /* ---------- 기록 변경 ---------- */
@@ -126,7 +139,7 @@
     function importData(obj) { if (!obj || typeof obj.days !== 'object') throw new Error('올바른 백업 파일이 아닙니다'); state = normalize(obj); persist(); }
     function wipe() { state = blank(); persist(); }
 
-    return { load, flush, raw, allProducts, getProduct, effAbv, effMl, imageId, thumbId, dayOf, entriesOf, gOf, weekSum, streak, isRecorded, analyze, dayStatus, photosOf, addPhoto, removePhoto,
+    return { load, flush, raw, allProducts, getProduct, effAbv, effMl, imageId, thumbId, dayOf, entriesOf, gOf, weekSum, streak, isRecorded, firstRecordDate, isSober, isAutoSober, analyze, dayStatus, photosOf, addPhoto, removePhoto,
       saveEntry, deleteEntry, toggleSober, setDayField, toggleSymptom, toggleFav, touchRecent, saveOverride, addCustom, deleteCustom, resetOverrides, setProfile, setGoals, exportJSON, importData, wipe,
       get profile() { return state.profile; }, get goals() { return state.goals; }, get fav() { return state.fav; }, get recent() { return state.recent; }, get custom() { return state.custom; } };
   }

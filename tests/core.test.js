@@ -114,19 +114,21 @@ test('연속 음주 3일 이상은 앱 자체 규칙으로 안내', async () => 
   assert.equal(store.analyze('2026-11-02').level, 'none');
 });
 
-test('통계: 기록 없는 날은 금주로 세지 않고, 이전 기간과 비교', async () => {
+test('통계: 기록 없는 날은 첫 기록일 이후부터 자동 금주로 세고, 이전 기간과 비교', async () => {
   const { store } = await newStore({ sex: 'male' });
   drink(store, '2026-11-02', 'chamisul-fresh', 0, 0.5, 16);
   drink(store, '2026-11-03', 'cass', 1, 1, 5);
   store.toggleSober('2026-11-05');
   const r = stats.periodRange('month', 0, '2026-11-27'), s = stats.summarize(store, r, '2026-11-27');
   assert.equal(r.label, '2026년 11월');
-  assert.equal(s.drink.length, 2); assert.equal(s.sober.length, 1);            // 11-05 만 금주 (나머지 미기록)
+  assert.equal(s.drink.length, 2); assert.equal(s.sober.length, 23);           // 첫 기록일(11-02) 이후 오늘(11-27) 이전의 기록 없는 날 11-04~11-26 = 23일(11-05 는 직접 기록)
   assert.ok(Math.abs(s.total - (calc.gramOf(180, 16) + calc.gramOf(500, 5))) < 1e-9);
-  assert.equal(s.maxDrink, 2); assert.equal(s.maxSober, 1);
+  assert.equal(s.maxDrink, 2); assert.equal(s.maxSober, 23);
   assert.deepEqual(Object.keys(s.byCat).sort(), ['beer', 'soju']);
   const prev = stats.summarize(store, stats.periodRange('month', -1, '2026-11-27'), '2026-11-27');
   assert.equal(prev.total, 0); assert.equal(stats.changePct(s.total, prev.total), null);
+  assert.equal(prev.sober.length, 0);                              // 첫 기록일(11-02) 이전인 10월은 금주로 세지 않음
+  assert.ok(s.abvAvg > 5 && s.abvAvg < 16);                         // 평균 도수(양 가중): 소주 180mL 16% + 맥주 500mL 5%
   const w = stats.periodRange('week', 0, '2026-11-27'); assert.equal(w.from, '2026-11-22'); assert.equal(w.to, '2026-11-28');
   assert.equal(stats.periodRange('year', 0, '2026-11-27').to, '2026-12-31');
   assert.equal(stats.weeklySeries(store, 12, '2026-11-27').length, 12);
@@ -181,12 +183,17 @@ test('캘린더 날짜 상태(dayStatus)·연속 금주·최근 7일 비교', as
   assert.equal(store.dayStatus('2026-11-20'), 'ok');
   assert.equal(store.dayStatus('2026-11-21'), 'warn');
   assert.equal(store.dayStatus('2026-11-23'), 'sober');
-  assert.equal(store.dayStatus('2026-11-22'), 'none');            // 미기록은 금주가 아님
-  assert.equal(stats.soberStreak(store, '2026-11-25'), 3);
-  assert.equal(stats.soberStreak(store, '2026-11-26'), 3);        // 오늘 미기록이면 어제부터
-  assert.equal(stats.soberStreak(store, '2026-11-22'), 0);
+  const T26 = '2026-11-26';
+  assert.equal(store.dayStatus('2026-11-22', T26), 'sober');       // 기록 없는 날은 자동 금주
+  assert.equal(store.isAutoSober('2026-11-22', T26), true); assert.equal(store.isAutoSober('2026-11-23', T26), false); // 23일은 직접 기록
+  assert.equal(store.dayStatus(T26, T26), 'none');                 // 오늘은 하루가 끝나야 자동 금주
+  assert.equal(store.dayStatus('2026-11-19', T26), 'none');        // 첫 기록일(11-20) 이전은 집계 안 함
+  assert.equal(store.dayStatus('2026-11-27', T26), 'none');        // 미래
+  assert.equal(stats.soberStreak(store, '2026-11-25'), 4);         // 22(자동)+23·24·25(직접)
+  assert.equal(stats.soberStreak(store, T26), 4);                  // 오늘 미기록이면 어제부터
+  assert.equal(stats.soberStreak(store, '2026-11-22'), 0);         // 21일에 마심
   const w = stats.weekCompare(store, '2026-11-26');
-  assert.equal(w.sober, 3); assert.ok(Math.abs(w.cur - (calc.gramOf(500, 4.5) + calc.gramOf(700, 40))) < 1e-9);
+  assert.equal(w.sober, 4); assert.ok(Math.abs(w.cur - (calc.gramOf(500, 4.5) + calc.gramOf(700, 40))) < 1e-9);
   assert.equal(w.prev, 0); assert.equal(w.pct, null);
 });
 
@@ -231,10 +238,10 @@ test('주간 목표 진행·금주 배지', async () => {
   assert.ok(g.cur > 40 && g.cur < 48 && g.pct < 50 && !g.over, JSON.stringify(g));
   drink(s, '2026-11-25', 'chamisul-fresh', 0, 0.5);
   assert.equal(stats.goalProgress(s, '2026-11-25').find(x => x.key === 'days').over, true);
-  // 배지: 11-10~11-16 7일 연속 금주 기록 → 3·7일 배지
+  // 배지: 11-10~11-16 직접 금주 기록 + 이어서 17~22일은 기록이 없어 자동 금주 → 최장 13일(3·7일 배지)
   for (let i = 10; i <= 16; i++) s.toggleSober('2026-11-' + i);
   const b = stats.badges(s, '2026-11-25');
-  assert.equal(stats.longestSober(s), 7); assert.deepEqual(b.earned, [3, 7]); assert.equal(b.cur, 0); assert.equal(b.next, 3);
+  assert.equal(stats.longestSober(s, '2026-11-25'), 13); assert.deepEqual(b.earned, [3, 7]); assert.equal(b.cur, 0); assert.equal(b.next, 3);
 });
 
 test('카스 라이트·테라 라이트: 병·캔 단위, 참고값 표시, 이미지 id 연결', () => {
@@ -258,4 +265,37 @@ test('분량 선택: 버튼은 ½·1·2, +/− 는 1씩(분수는 직접 입력�
   dr.customQty(1.5); assert.equal(dr.customMode, true); dr.step(1); assert.equal(dr.qty, 2); dr.customQty(2.5); dr.step(-1); assert.equal(dr.qty, 2); // 소수는 정수로 정리
   dr.customQty(0.25); assert.equal(dr.qty, 0.25); // 직접 입력은 분수도 가능
   assert.equal(calc.isPreset(0.5) && calc.isPreset(1) && calc.isPreset(3), true); assert.equal(calc.isPreset(0.75) || calc.isPreset(1.5), false);
+});
+
+test('통계 한 줄 코멘트: 빈도·양·도수에 따라 칭찬/주의가 바뀜', () => {
+  const g = require('../js/data/guidelines.js'), th = g.thresholds({ sex: 'male' });
+  const base = { now: true, kind: 'month', label: '2026년 11월', elapsedDays: 28, drinkDays: 0, soberDays: 0, total: 0, warnDays: 0, abvAvg: null, th };
+  assert.equal(g.periodComment(base).tone, 'none');
+  const sober = g.periodComment(Object.assign({}, base, { soberDays: 28 })); assert.equal(sober.tone, 'good'); assert.ok(/28일/.test(sober.text));
+  const light = g.periodComment(Object.assign({}, base, { drinkDays: 3, soberDays: 25, total: 60, abvAvg: 5 })); assert.equal(light.tone, 'good');
+  const ok = g.periodComment(Object.assign({}, base, { drinkDays: 9, soberDays: 19, total: 150, abvAvg: 6 })); assert.equal(ok.tone, 'ok');
+  const warn = g.periodComment(Object.assign({}, base, { drinkDays: 6, soberDays: 22, total: 300, warnDays: 2, abvAvg: 5 })); assert.equal(warn.tone, 'warn'); assert.ok(/도수는 낮아도/.test(warn.text));
+  const alert = g.periodComment(Object.assign({}, base, { drinkDays: 16, soberDays: 12, total: 900, warnDays: 6, abvAvg: 16.5 })); assert.equal(alert.tone, 'alert'); assert.ok(/센 술/.test(alert.text)); // 높은 도수 언급
+  assert.equal(g.periodComment(base).text, g.periodComment(base).text);                         // 같은 기간엔 같은 문구
+  const texts = new Set(['2026년 8월', '2026년 9월', '2026년 10월', '2026년 11월'].map(l => g.periodComment(Object.assign({}, base, { label: l, soberDays: 28 })).text)); assert.ok(texts.size >= 2); // 기간이 바뀌면 문구가 바뀜
+  assert.ok(!/진단|안전합니다|치료/.test([sober, light, ok, warn, alert].map(x => x.text).join(' ')));      // 의학적 단정 표현 없음
+});
+
+test('자동 금주: 첫 기록 전·오늘·미래는 세지 않고, 마신 날로 바꾸면 금주가 풀림', async () => {
+  const { store } = await newStore();
+  assert.equal(store.firstRecordDate(), null); assert.equal(store.isSober('2026-11-10', '2026-11-20'), false); // 기록이 하나도 없으면 아무 날도 금주로 세지 않음
+  drink(store, '2026-11-10', 'cass', 1, 1, 4.5);
+  assert.equal(store.firstRecordDate(), '2026-11-10');
+  assert.equal(store.isSober('2026-11-09', '2026-11-20'), false); assert.equal(store.isSober('2026-11-12', '2026-11-20'), true);
+  assert.equal(store.isSober('2026-11-20', '2026-11-20'), false); assert.equal(store.isSober('2026-11-21', '2026-11-20'), false);
+  drink(store, '2026-11-12', 'cass', 1, 1, 4.5); assert.equal(store.isSober('2026-11-12', '2026-11-20'), false);  // 기록하면 금주가 아님
+  const s = stats.summarize(store, stats.periodRange('month', 0, '2026-11-20'), '2026-11-20'); assert.equal(s.sober.length, 8); // 11일 + 13~19일
+});
+
+test('친구 초대 링크: 만들기와 읽기', () => {
+  assert.equal(calc.inviteUrl('https://a.github.io/drink-diary/', 'ab12cd34'), 'https://a.github.io/drink-diary/?friend=AB12CD34');
+  assert.equal(calc.inviteUrl('https://a.github.io/x/?old=1#h', 'ZZ99'), 'https://a.github.io/x/?friend=ZZ99');   // 기존 쿼리·해시 제거
+  assert.equal(calc.inviteUrl('https://a.github.io/x/', null), 'https://a.github.io/x/');                          // 코드가 없으면 앱 주소만
+  assert.equal(calc.inviteCode('?friend=ab12cd34'), 'AB12CD34'); assert.equal(calc.inviteCode('?x=1&friend=CODE0001&y=2'), 'CODE0001');
+  assert.equal(calc.inviteCode('?friend=<script>'), null); assert.equal(calc.inviteCode('?friend=ab'), null); assert.equal(calc.inviteCode(''), null); // 이상한 값은 무시
 });

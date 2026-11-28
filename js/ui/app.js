@@ -8,14 +8,14 @@
   const S = { tab: 'cal', month: calc.todayS().slice(0, 7), recDate: calc.todayS(), sel: calc.todayS(), cat: 'all', q: '', statP: 'month', statOff: 0, cc: { cat: 'etc', unit: 'bottle' } };
   let cloud = null, store = null, views = null, draft = null, storageInfo = { mode: 'local', note: '' };
   S.fr = { list: null, err: '', view: null };   // 친구 화면 상태
-  S.acct = { profile: null };                    // 내 친구 코드·표시 이름
+  S.acct = { profile: null }; S.pick = { y: 0, m: 0 };   // 통계 기간 선택 달력의 표시 연·월                    // 내 친구 코드·표시 이름
 
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2400); }
 
   /* ---------- 그리기 ---------- */
   function render() {
-    $('#nav').innerHTML = views.nav();
-    const v = { cal: views.cal, rec: views.rec, stats: views.stats, report: views.report, set: views.settings, friends: views.friends }[S.tab];
+    $('#nav').innerHTML = S.tab === 'onboard' ? '' : views.nav();   // 첫 실행 화면에서는 하단 메뉴를 숨김
+    const v = { cal: views.cal, rec: views.rec, stats: views.stats, report: views.report, set: views.settings, friends: views.friends, onboard: views.onboard }[S.tab];
     $('#app').innerHTML = v(); hydrate();
     if (S.tab === 'rec' && S.keepFocus) { const i = $('#q'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } S.keepFocus = false; }
   }
@@ -77,6 +77,15 @@
       case 'cat': S.cat = v; S.q = ''; render(); break;
       case 'fav': store.toggleFav(v); render(); break;
       case 'pick': openAmount(v); break;
+      case 'rangePick': { const r = DB.stats.periodRange(S.statP, S.statOff); S.pick = { y: +r.from.slice(0, 4), m: +r.from.slice(5, 7) }; openSheet(views.rangePicker()); break; }
+      case 'pickNav': { if (S.statP === 'week') { const d = new Date(S.pick.y, S.pick.m - 1 + (+v), 1); S.pick = { y: d.getFullYear(), m: d.getMonth() + 1 }; } else S.pick.y += +v; openSheet(views.rangePicker()); break; }
+      case 'pickMonth': { const [y, m] = v.split('-').map(Number), t = calc.todayS(); S.statOff = (y - +t.slice(0, 4)) * 12 + (m - +t.slice(5, 7)); closeSheet(); render(); break; }
+      case 'pickYearSel': S.statOff = +v - +calc.todayS().slice(0, 4); closeSheet(); render(); break;
+      case 'pickDay': { const sun = d => calc.addDays(d, -calc.parse(d).getDay()), base = sun(calc.todayS()); S.statOff = Math.round((calc.parse(sun(v)) - calc.parse(base)) / 604800000); closeSheet(); render(); break; }
+      case 'pickToday': S.statOff = 0; closeSheet(); render(); break;
+      case 'shareInvite': shareInvite(); break;
+      case 'obSkip': lsSet(SKIP_KEY, '1'); render(); root.scrollTo(0, 0); break;
+      case 'obDone': store.setProfile({ onboarded: true }); lsSet(OB_KEY, '1'); S.tab = 'cal'; render(); root.scrollTo(0, 0); handleInvite(); break;
       case 'theme': lsSet(THEME_KEY, v); applyTheme(); render(); break;
       case 'setRecDate': S.recDate = v; render(); break;
       case 'pickDate': { const i = $('#dateIn'); if (i.showPicker) i.showPicker(); else i.click(); break; }
@@ -105,7 +114,7 @@
       case 'copyCode': { const c = S.acct.profile && S.acct.profile.friend_code; if (c && root.navigator.clipboard) root.navigator.clipboard.writeText(c).then(() => toast('친구 코드를 복사했어요')).catch(() => toast('복사하지 못했어요. 코드를 직접 알려 주세요')); break; }
       case 'exportStash': { const t = root.localStorage.getItem(DB.api.BACKUP_KEY); if (!t) break; const b = new Blob([t], { type: 'application/json' }), a = doc.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'drink-balance-device-backup.json'; a.click(); break; }
       case 'friendsTab': S.tab = 'friends'; S.fr.view = null; render(); loadFriends(); break;
-      case 'friendAdd': { const code = ($('#fcode') || {}).value || ''; if (!code.trim()) { toast('친구 코드를 입력해 주세요'); break; } cloudTry(async () => { const r = await cloud.requestFriend(code); toast({ sent: '친구 요청을 보냈어요', accepted: '서로 요청해서 바로 친구가 됐어요', exists: '이미 요청했거나 친구예요', self: '내 코드예요', not_found: '해당 코드를 찾을 수 없어요' }[r] || '처리했어요'); await loadFriends(); }); break; }
+      case 'friendAdd': { const code = ($('#fcode') || {}).value || ''; if (!code.trim()) { toast('친구 코드를 입력해 주세요'); break; } cloudTry(async () => { const r = await cloud.requestFriend(code); toast({ sent: '친구 요청을 보냈어요', accepted: '서로 요청해서 바로 친구가 됐어요', exists: '이미 요청했거나 친구예요', self: '내 코드예요', not_found: '해당 코드를 찾을 수 없어요' }[r] || '처리했어요'); S.fr.prefill = ''; await loadFriends(); }); break; }
       case 'friendAccept': cloudTry(async () => { await cloud.acceptFriend(v); toast('친구가 됐어요'); await loadFriends(); }); break;
       case 'friendRemove': if (root.confirm('친구 관계를 끊거나 요청을 취소할까요? 서로의 기록이 더 이상 보이지 않아요.')) cloudTry(async () => { await cloud.removeFriend(v); S.fr.view = null; await loadFriends(); }); break;
       case 'friendOpen': openFriend(v); break;
@@ -185,6 +194,40 @@
     return { due: last == null ? Object.keys(store.raw().days).length >= 3 : days >= 7, days };
   }
 
+  /* ---------- 첫 실행(로그인 → 내 정보) ---------- */
+  const OB_KEY = 'drinkBalance.onboarded', SKIP_KEY = 'drinkBalance.skipLogin', INV_KEY = 'drinkBalance.pendingFriend';
+  /** 한 번 끝냈거나(계정·기기 어느 쪽이든) 이미 기록이 있으면 다시 묻지 않음 */
+  const onboardDone = () => !!((store.profile && store.profile.onboarded) || lsGet(OB_KEY) || Object.keys(store.raw().days).length > 0);
+  const onboardStep = () => (cloud.configured && !cloud.loggedIn && !lsGet(SKIP_KEY)) ? 'login' : 'info';
+
+  /* ---------- 친구 초대 링크 ---------- */
+  /** 친구가 열 수 있는 앱 주소: 공개 주소(https)로 열었으면 그 주소, 내 PC·파일로 열었으면 설정의 publicUrl */
+  function inviteBase() {
+    const h = root.location, pub = (DB.config && DB.config.publicUrl) || '';
+    return (h.protocol === 'https:' && !/^(localhost|127\.)/.test(h.hostname)) ? h.origin + h.pathname.replace(/index\.html$/, '') : (pub || h.href);
+  }
+  function shareInvite() {
+    const code = cloud && cloud.loggedIn && S.acct.profile ? S.acct.profile.friend_code : null, url = calc.inviteUrl(inviteBase(), code);
+    const text = code ? `드링크 밸런스에서 같이 기록해요! 링크로 들어와 가입하면 내 친구 코드(${code})가 자동으로 입력돼요.` : '드링크 밸런스 — 마신 술을 기록하고 건강 위험을 확인하는 앱이에요.';
+    const nav = root.navigator;
+    if (nav && nav.share) nav.share({ title: '드링크 밸런스', text, url }).catch(() => { /* 공유 창을 닫음 */ });
+    else if (nav && nav.clipboard) nav.clipboard.writeText(url).then(() => toast('초대 링크를 복사했어요. 친구에게 붙여 넣어 보내세요')).catch(() => root.prompt('아래 링크를 복사해 친구에게 보내세요', url));
+    else root.prompt('아래 링크를 복사해 친구에게 보내세요', url);
+    return url;
+  }
+  /** 초대 링크(?friend=코드)로 들어왔을 때: 코드를 기억해 두었다가, 로그인·내 정보가 끝난 뒤 친구 화면에 채워 줌 */
+  function captureInvite() {
+    const code = calc.inviteCode(root.location.search); if (!code) return;
+    lsSet(INV_KEY, code);
+    try { root.history.replaceState(null, '', root.location.pathname); } catch (e) { /* file:// 등 */ }
+  }
+  function handleInvite() {
+    const code = lsGet(INV_KEY); if (!code || S.tab === 'onboard' || !onboardDone()) return;
+    if (!(cloud && cloud.configured && cloud.loggedIn)) { toast('친구 초대를 받았어요. 로그인하면 이어서 친구 요청을 보낼 수 있어요'); S.tab = 'set'; render(); return; }
+    try { root.localStorage.removeItem(INV_KEY); } catch (e) { /* 무시 */ }
+    S.fr.prefill = code; S.tab = 'friends'; render(); loadFriends(); toast('초대 코드가 입력됐어요. "요청 보내기"를 눌러 주세요');
+  }
+
   /* ---------- 계정·친구 (클라우드) ---------- */
   const cloudErr = e => (e && e.message) ? e.message : String(e);
   async function cloudTry(fn) { try { await fn(); } catch (e) { toast('실패했어요: ' + cloudErr(e)); } }
@@ -220,10 +263,13 @@
       store = make(sel.adapter); await store.load();
     }
     storageInfo = sel;
-    views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo, cloud, backupInfo, theme: getTheme });
+    views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo, cloud, backupInfo, theme: getTheme, onboardStep, pendingInvite: () => lsGet(INV_KEY) });
+    captureInvite();
+    if (!onboardDone()) S.tab = 'onboard';
     render();
     if (sel.note) toast(sel.note);
-    DB.app = { store, S, render, openAmount, openDay, addPhotos, cloud };   // 디버깅·테스트용
+    handleInvite();
+    DB.app = { store, S, render, openAmount, openDay, addPhotos, cloud, shareInvite, onboardDone };   // 디버깅·테스트용
     if (cloud.configured && cloud.loggedIn) {
       loadAcct();
       // 처음 한 번(또는 기록을 옮긴 직후) 이 기기의 사진을 계정으로 올림
