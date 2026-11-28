@@ -143,8 +143,9 @@
       }
       const es = store.entriesOf(S.recDate), g = store.gOf(S.recDate);
       return `<div class="sc-head"><button class="icon-btn x" data-act="tab" data-v="cal" aria-label="뒤로">${I.back}</button><span>주류 선택</span></div>
-        <div class="row center-row"><button class="pill ghost" data-act="pickDate">${niceDate(S.recDate)} ▾</button></div>
-        <input type="date" id="dateIn" class="hidden-date" value="${S.recDate}" max="${calc.todayS()}">
+        <div class="date-pick"><div class="date-now">기록할 날짜 <b>${niceDate(S.recDate)}</b>${S.recDate !== calc.todayS() ? ' <span class="pill warn sm">지난 날짜</span>' : ''}</div>
+          <div class="chips">${[['오늘', 0], ['어제', -1], ['그제', -2]].map(([n, o]) => { const d = calc.addDays(calc.todayS(), o); return `<button class="chip ${S.recDate === d ? 'on' : ''}" data-act="setRecDate" data-v="${d}">${n}</button>`; }).join('')}
+            <label class="chip date-chip ${[0, -1, -2].some(o => calc.addDays(calc.todayS(), o) === S.recDate) ? '' : 'on'}">📅 다른 날짜<input type="date" id="dateIn" value="${S.recDate}" max="${calc.todayS()}"></label></div></div>
         ${es.length || (store.dayOf(S.recDate) && store.dayOf(S.recDate).sober) ? `<div class="today-bar" data-act="daySheet" data-v="${S.recDate}" role="button"><span>이 날 기록 <b>${es.length}건</b> · 순수 알코올 <b>${r1(g)}g</b></span><span class="sp"></span><span>보기 ›</span></div>` : ''}
         ${!es.length ? `<div class="card sober-card"><div class="sp"><b>${niceDate(S.recDate)}, 술을 안 마셨나요?</b><small>입력을 깜빡했어도 날짜를 골라 금주로 남길 수 있어요.</small></div><button class="btn ${store.dayOf(S.recDate) && store.dayOf(S.recDate).sober ? 'ghost' : ''} sm" data-act="sober" data-v="${S.recDate}">${store.dayOf(S.recDate) && store.dayOf(S.recDate).sober ? '금주 기록 취소' : '금주했어요!'}</button></div>` : ''}
         <label class="search"><span aria-hidden="true">${I.search}</span><input id="q" type="search" placeholder="주류를 검색해 보세요 (예: 참이슬, 카스)" value="${esc(S.q)}" autocomplete="off"></label>

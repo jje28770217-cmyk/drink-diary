@@ -269,3 +269,9 @@ i.dot.warn{background:var(--red)}
 .goal small{display:block;margin-top:4px;font-size:12.5px;color:var(--sub)}
 .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.badge{font-size:12.5px;padding:4px 10px;border-radius:999px;background:var(--tile);color:var(--sub)}.badge.on{background:var(--lav-mid);color:var(--lav-deep);font-weight:800}
 .backup-card{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--amber-soft)}.backup-card small{display:block;color:var(--sub);font-size:12px;margin-top:2px}
+
+/* 기록할 날짜 선택 (보이는 버튼: 오늘/어제/그제/다른 날짜) */
+.date-pick{margin:4px 0 12px;text-align:center}.date-now{font-size:15px;margin-bottom:8px}.date-now b{color:var(--lav-deep)}
+.date-pick .chips{justify-content:center}
+.date-chip{position:relative;cursor:pointer;overflow:hidden}
+.date-chip input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}

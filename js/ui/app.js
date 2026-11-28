@@ -66,7 +66,7 @@
     const act = el.dataset.act, v = el.dataset.v;
     if (act === 'warn' || act === 'fav') ev.stopPropagation();
     switch (act) {
-      case 'tab': S.tab = v; render(); root.scrollTo(0, 0); break;
+      case 'tab': S.tab = v; if (v === 'rec') S.recDate = calc.todayS(); render(); root.scrollTo(0, 0); break;
       case 'mon': { const [y, m] = S.month.split('-').map(Number); const d = new Date(y, m - 1 + (+v), 1); S.month = d.getFullYear() + '-' + calc.pad(d.getMonth() + 1); render(); break; }
       case 'monToday': S.month = calc.todayS().slice(0, 7); render(); break;
       case 'day': S.sel = v; render(); break;            // 캘린더: 날짜를 고르면 아래 카드에 상세가 보임
@@ -77,6 +77,7 @@
       case 'cat': S.cat = v; S.q = ''; render(); break;
       case 'fav': store.toggleFav(v); render(); break;
       case 'pick': openAmount(v); break;
+      case 'setRecDate': S.recDate = v; render(); break;
       case 'pickDate': { const i = $('#dateIn'); if (i.showPicker) i.showPicker(); else i.click(); break; }
       case 'closeAmount': closeAmount(); break;
       case 'unit': draft.setUnit(v === 'ml' ? 'ml' : +v); renderAmount(); break;
