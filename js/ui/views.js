@@ -190,7 +190,7 @@
       const step = t === 'ml' ? 50 : 0.25;
       return `<div class="screen-in">
         <div class="sc-head"><button class="icon-btn x" data-act="closeAmount" aria-label="뒤로">${I.back}</button><span>음주 기록</span></div>
-        <div class="live-badge"><span class="pill ghost"><i class="dot ok"></i>실시간 순수 알코올 계산</span></div>
+        <div class="live-badge"><span class="pill ${dr.date !== calc.todayS() ? 'warn' : 'mint'}">📅 ${niceDate(dr.date)}에 기록${dr.date !== calc.todayS() ? ' · 지난 날짜' : ''}</span> <span class="pill ghost"><i class="dot ok"></i>실시간 순수 알코올 계산</span></div>
         <div class="amount-grid"><div class="amount-left">
         <section class="card hero"><div class="pic" id="heroPic">${live.hero}</div>
           <h2>${esc(p.name)}</h2>

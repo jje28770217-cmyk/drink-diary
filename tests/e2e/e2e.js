@@ -80,6 +80,26 @@ async function scenario(b, url, label, expectRemote) {
   const dim = await b.eval(`(async () => { const id = DB.app.store.photosOf(DB.calc.todayS())[0]; const u = await DB.photos.url(id); const im = new Image(); im.src = u; await im.decode(); return im.naturalWidth + 'x' + im.naturalHeight; })()`);
   ok('사진이 긴 변 1280px 이하로 줄어 저장됨', dim === '1280x960', dim);
   await b.eval(`DB.app.store.flush()`); await sleep(400);
+  // 10-3) 지난 날짜 기록: 캘린더에서 고른 날짜·날짜 칩·다른 날짜 입력이 모두 그 날짜로 저장되고 오늘로 새지 않음
+  {
+    const today = await b.eval(`DB.calc.todayS()`), d3 = await b.eval(`DB.calc.addDays(DB.calc.todayS(), -3)`), d2 = await b.eval(`DB.calc.addDays(DB.calc.todayS(), -2)`), d6 = await b.eval(`DB.calc.addDays(DB.calc.todayS(), -6)`);
+    const cnt = d => b.eval(`DB.app.store.entriesOf('${d}').length`);
+    const [t0, a0, c0, f0] = [await cnt(today), await cnt(d3), await cnt(d2), await cnt(d6)];
+    await b.eval(`c('[data-act=tab][data-v=cal]'); c('[data-act=day][data-v="${d3}"]'); c('[data-act=tab][data-v=rec]'); true`);
+    ok('캘린더에서 고른 날짜로 기록하기 시작', (await b.eval(`DB.app.S.recDate`)) === d3);
+    await b.eval(`c('[data-act=pick][data-v=chamisul-fresh]'); true`);
+    ok('분량 화면에 기록할 날짜·지난 날짜 표시', /에 기록 · 지난 날짜/.test(await b.eval(`txt('#amount')`)));
+    await b.eval(`c('[data-act=qty][data-v="0.5"]'); c('#saveBtn'); true`); await sleep(300);
+    ok('고른 날짜에 저장(오늘로 새지 않음)', (await cnt(d3)) === a0 + 1 && (await cnt(today)) === t0);
+    await b.eval(`c('[data-act=setRecDate][data-v="${d2}"]'); c('[data-act=pick][data-v=chamisul-fresh]'); c('[data-act=qty][data-v="0.5"]'); c('#saveBtn'); true`); await sleep(300);
+    ok('그제 칩으로 그제에 저장', (await cnt(d2)) === c0 + 1 && (await cnt(today)) === t0);
+    await b.eval(`(() => { const i = document.getElementById('dateIn'); i.value = '${d6}'; i.dispatchEvent(new Event('change', { bubbles: true })); return 1; })()`);
+    await b.eval(`c('[data-act=pick][data-v=chamisul-fresh]'); c('[data-act=qty][data-v="0.5"]'); c('#saveBtn'); true`); await sleep(300);
+    ok('다른 날짜 입력으로 6일 전에 저장', (await cnt(d6)) === f0 + 1 && (await cnt(today)) === t0);
+    await b.eval(`c('[data-act=tab][data-v=stats]'); c('[data-act=tab][data-v=rec]'); true`);
+    ok('다른 탭에서 기록하기를 누르면 오늘로 시작', (await b.eval(`DB.app.S.recDate`)) === today);
+    await b.eval(`DB.app.store.deleteEntry('${d3}', DB.app.store.entriesOf('${d3}').slice(-1)[0].id); DB.app.store.deleteEntry('${d2}', DB.app.store.entriesOf('${d2}').slice(-1)[0].id); DB.app.store.deleteEntry('${d6}', DB.app.store.entriesOf('${d6}').slice(-1)[0].id); DB.app.render(); true`);
+  }
   // 11) 저장 유지: 새로고침 후에도 남아 있는지
   await b.eval(`DB.app.store.flush()`); await sleep(400);
   const before = await b.eval(`DB.app.store.entriesOf(DB.calc.todayS()).length`);

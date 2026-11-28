@@ -66,14 +66,14 @@
     const act = el.dataset.act, v = el.dataset.v;
     if (act === 'warn' || act === 'fav') ev.stopPropagation();
     switch (act) {
-      case 'tab': S.tab = v; if (v === 'rec') S.recDate = calc.todayS(); render(); root.scrollTo(0, 0); break;
+      case 'tab': if (v === 'rec') S.recDate = (S.tab === 'cal' && S.sel && S.sel <= calc.todayS()) ? S.sel : calc.todayS(); S.tab = v; render(); root.scrollTo(0, 0); break;
       case 'mon': { const [y, m] = S.month.split('-').map(Number); const d = new Date(y, m - 1 + (+v), 1); S.month = d.getFullYear() + '-' + calc.pad(d.getMonth() + 1); render(); break; }
       case 'monToday': S.month = calc.todayS().slice(0, 7); render(); break;
       case 'day': S.sel = v; render(); break;            // 캘린더: 날짜를 고르면 아래 카드에 상세가 보임
       case 'daySheet': openDay(v); break;                // 시간·증상·메모가 있는 상세 시트
       case 'warn': openWarn(v); break;
       case 'closeSheet': closeSheet(); break;
-      case 'addTo': S.recDate = v; S.tab = 'rec'; closeSheet(); render(); root.scrollTo(0, 0); break;
+      case 'addTo': if (v > calc.todayS()) { toast('아직 오지 않은 날짜에는 기록할 수 없어요'); break; } S.recDate = v; S.tab = 'rec'; closeSheet(); render(); root.scrollTo(0, 0); break;
       case 'cat': S.cat = v; S.q = ''; render(); break;
       case 'fav': store.toggleFav(v); render(); break;
       case 'pick': openAmount(v); break;
