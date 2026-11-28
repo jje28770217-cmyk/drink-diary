@@ -5,10 +5,12 @@
   "description": "음주 기록·분석 웹앱 (프론트엔드 정적 파일 + 선택형 로컬 백엔드)",
   "scripts": {
     "start": "node server/server.js",
-    "test": "node --test tests/core.test.js tests/server.test.js",
+    "test": "node --test tests/core.test.js tests/server.test.js tests/cloud.test.js",
     "build:assets": "node tools/build-assets.js",
     "build:images": "node tools/build-manifest.js",
-    "test:e2e": "node tests/e2e/e2e.js"
+    "test:e2e": "node tests/e2e/e2e.js",
+    "test:cloud": "node --test tests/cloud.test.js",
+    "test:e2e:friends": "node tests/e2e/friends-e2e.js"
   },
   "engines": {
     "node": ">=18"

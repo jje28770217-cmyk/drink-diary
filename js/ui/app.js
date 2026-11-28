@@ -6,14 +6,16 @@
   const $ = s => doc.querySelector(s);
 
   const S = { tab: 'cal', month: calc.todayS().slice(0, 7), recDate: calc.todayS(), sel: calc.todayS(), cat: 'all', q: '', statP: 'month', statOff: 0, cc: { cat: 'etc', unit: 'bottle' } };
-  let store = null, views = null, draft = null, storageInfo = { mode: 'local', note: '' };
+  let cloud = null, store = null, views = null, draft = null, storageInfo = { mode: 'local', note: '' };
+  S.fr = { list: null, err: '', view: null };   // 친구 화면 상태
+  S.acct = { profile: null };                    // 내 친구 코드·표시 이름
 
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2400); }
 
   /* ---------- 그리기 ---------- */
   function render() {
     $('#nav').innerHTML = views.nav();
-    const v = { cal: views.cal, rec: views.rec, stats: views.stats, report: views.report, set: views.settings }[S.tab];
+    const v = { cal: views.cal, rec: views.rec, stats: views.stats, report: views.report, set: views.settings, friends: views.friends }[S.tab];
     $('#app').innerHTML = v(); hydrate();
     if (S.tab === 'rec' && S.keepFocus) { const i = $('#q'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } S.keepFocus = false; }
   }
@@ -30,6 +32,10 @@
     doc.querySelectorAll('img[data-photo]:not([data-ok])').forEach(img => {
       img.dataset.ok = '1';
       DB.photos.url(img.dataset.photo).then(u => { if (u) img.src = u; else img.replaceWith(Object.assign(doc.createElement('span'), { className: 'pmiss', textContent: '사진 없음' })); }).catch(() => { });
+    });
+    doc.querySelectorAll('img[data-fphoto]:not([data-ok])').forEach(img => {
+      img.dataset.ok = '1'; const [o, id] = img.dataset.fphoto.split('|');
+      DB.photos.friendUrl(o, id).then(u => { if (u) img.src = u; else img.replaceWith(Object.assign(doc.createElement('span'), { className: 'pmiss', textContent: '사진 없음' })); }).catch(() => { });
     });
   }
   async function addPhotos(date, files) {
@@ -83,6 +89,27 @@
       case 'delEntry': { const [s, id] = v.split('|'); if (!root.confirm('이 기록을 삭제할까요?')) break; store.deleteEntry(s, id); render(); if (!$('#sheetWrap').hidden) openDay(s); break; }
       case 'photoView': { const [s, id] = v.split('|'); openSheet(views.photoView(s, id)); break; }
       case 'delPhoto': { const [s, id] = v.split('|'); if (!root.confirm('이 사진을 삭제할까요?')) break; store.removePhoto(s, id); DB.photos.remove(id).catch(() => { }); closeSheet(); render(); toast('사진을 삭제했어요'); break; }
+      case 'login': case 'signup': {
+        const em = ($('#emailIn') || {}).value || '', pw = ($('#pwIn') || {}).value || '';
+        if (!em.trim() || !pw) { toast('이메일과 비밀번호를 입력해 주세요'); break; }
+        cloudTry(async () => {
+          if (act === 'signup') { const r = await cloud.signUp(em.trim(), pw); if (r.needsConfirm) { toast('가입했어요. 이메일로 온 인증 링크를 누른 뒤 로그인해 주세요'); return; } } else await cloud.signIn(em.trim(), pw);
+          root.location.reload();
+        });
+        break;
+      }
+      case 'logout': if (root.confirm('로그아웃할까요? 이 기기에는 마지막으로 불러온 기록이 남아 있지 않을 수 있어요.')) cloud.signOut().then(() => root.location.reload()); break;
+      case 'saveName': cloudTry(async () => { await cloud.setDisplayName(($('#nameIn') || {}).value || ''); await loadAcct(); toast('표시 이름을 저장했어요'); }); break;
+      case 'copyCode': { const c = S.acct.profile && S.acct.profile.friend_code; if (c && root.navigator.clipboard) root.navigator.clipboard.writeText(c).then(() => toast('친구 코드를 복사했어요')).catch(() => toast('복사하지 못했어요. 코드를 직접 알려 주세요')); break; }
+      case 'exportStash': { const t = root.localStorage.getItem(DB.api.BACKUP_KEY); if (!t) break; const b = new Blob([t], { type: 'application/json' }), a = doc.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'drink-balance-device-backup.json'; a.click(); break; }
+      case 'friendsTab': S.tab = 'friends'; S.fr.view = null; render(); loadFriends(); break;
+      case 'friendAdd': { const code = ($('#fcode') || {}).value || ''; if (!code.trim()) { toast('친구 코드를 입력해 주세요'); break; } cloudTry(async () => { const r = await cloud.requestFriend(code); toast({ sent: '친구 요청을 보냈어요', accepted: '서로 요청해서 바로 친구가 됐어요', exists: '이미 요청했거나 친구예요', self: '내 코드예요', not_found: '해당 코드를 찾을 수 없어요' }[r] || '처리했어요'); await loadFriends(); }); break; }
+      case 'friendAccept': cloudTry(async () => { await cloud.acceptFriend(v); toast('친구가 됐어요'); await loadFriends(); }); break;
+      case 'friendRemove': if (root.confirm('친구 관계를 끊거나 요청을 취소할까요? 서로의 기록이 더 이상 보이지 않아요.')) cloudTry(async () => { await cloud.removeFriend(v); S.fr.view = null; await loadFriends(); }); break;
+      case 'friendOpen': openFriend(v); break;
+      case 'friendMonth': { const [y, m] = S.fr.view.month.split('-').map(Number); const d = new Date(y, m - 1 + (+v), 1); S.fr.view.month = d.getFullYear() + '-' + calc.pad(d.getMonth() + 1); render(); break; }
+      case 'friendBack': S.fr.view = null; render(); break;
+      case 'fphotoView': { const [o, id] = v.split('|'); openSheet(views.fphotoView(o, id)); break; }
       case 'sym': { const [s, k] = v.split('|'); store.toggleSymptom(s, k); render(); openDay(s); break; }
       case 'addCustom': S.cc = { cat: 'etc', unit: 'bottle' }; openSheet(views.custom()); break;
       case 'cCat': S.cc.cat = v; el.parentNode.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el)); break;
@@ -97,7 +124,7 @@
       case 'resetOv': if (root.confirm('수정한 제품 값을 모두 기본값으로 되돌릴까요?')) { store.resetOverrides(); toast('초기화했어요'); } break;
       case 'delCustom': if (root.confirm('이 제품을 삭제할까요? (과거 기록은 유지됩니다)')) { store.deleteCustom(v); render(); } break;
       case 'export': { const b = new Blob([store.exportJSON()], { type: 'application/json' }), a = doc.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'drink-balance-backup-' + calc.todayS() + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); break; }
-      case 'wipe': if (root.confirm('모든 기록을 삭제할까요? 되돌릴 수 없습니다.') && root.confirm('정말 전체 삭제할까요?')) { store.wipe(); DB.photos.clear().catch(() => { }); render(); toast('전체 삭제했어요'); } break;
+      case 'wipe': if (root.confirm('모든 기록을 삭제할까요? 되돌릴 수 없습니다.') && root.confirm('정말 전체 삭제할까요?')) { { const ids = []; Object.keys(store.raw().days).forEach(d => (store.raw().days[d].photos || []).forEach(i => ids.push(i))); if (cloud.loggedIn) ids.forEach(i => cloud.deletePhoto(i).catch(() => { })); } store.wipe(); DB.photos.clear().catch(() => { }); render(); toast('전체 삭제했어요'); } break;
     }
   });
   doc.addEventListener('keydown', ev => {
@@ -130,21 +157,54 @@
   doc.addEventListener('visibilitychange', () => { if (doc.visibilityState === 'hidden' && store) store.flush(); });
   root.addEventListener('pagehide', () => { if (store) store.flush(); });
 
+  /* ---------- 계정·친구 (클라우드) ---------- */
+  const cloudErr = e => (e && e.message) ? e.message : String(e);
+  async function cloudTry(fn) { try { await fn(); } catch (e) { toast('실패했어요: ' + cloudErr(e)); } }
+  async function loadAcct() { try { S.acct.profile = await cloud.getProfile(); } catch (e) { S.acct.profile = null; } if (S.tab === 'set') render(); }
+  async function loadFriends() {
+    try { S.fr.list = await cloud.listFriends(); S.fr.err = ''; } catch (e) { S.fr.err = cloudErr(e); }
+    if (S.tab === 'friends') render();
+  }
+  async function openFriend(id) {
+    const f = (S.fr.list || []).find(x => x.friend_id === id); if (!f) return;
+    S.fr.view = { id, name: f.name, month: calc.todayS().slice(0, 7), store: null, err: '' }; render();
+    try {
+      const st = await cloud.friendState(id);
+      if (!st) { S.fr.view.err = '아직 기록이 없거나 볼 수 있는 권한이 없어요'; render(); return; }
+      const fs = DB.store.createStore({ adapter: { load: async () => st, save: async () => { } }, products: DB.data.PRODUCTS, guide: DB.guide });
+      await fs.load(); S.fr.view.store = fs;   // 읽기 전용: 저장 어댑터가 아무것도 하지 않음
+    } catch (e) { S.fr.view.err = cloudErr(e); }
+    render();
+  }
+
   /* ---------- 부팅 ---------- */
   async function boot() {
     $('#app').innerHTML = '<div class="empty">불러오는 중…</div>';
     const make = a => DB.store.createStore({ adapter: a, products: DB.data.PRODUCTS, guide: DB.guide, onSaveError: e => toast('저장하지 못했어요: ' + (e && e.message ? e.message : e)) });
-    let sel = await DB.api.chooseAdapter();
+    let lsx = null; try { lsx = root.localStorage; } catch (e) { /* 저장소 접근 불가 */ }
+    const cfg = DB.config.supabase || {};
+    cloud = DB.createCloud({ url: cfg.url, key: cfg.key, storage: lsx });
+    DB.photos.setCloud(cloud);
+    let sel = await DB.api.chooseAdapter(cloud);
     store = make(sel.adapter);
     try { await store.load(); } catch (e) {
       sel = { adapter: DB.localAdapter, mode: 'local', note: '서버에서 기록을 불러오지 못해 이 브라우저 저장을 사용합니다' };
       store = make(sel.adapter); await store.load();
     }
     storageInfo = sel;
-    views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo });
+    views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo, cloud });
     render();
     if (sel.note) toast(sel.note);
-    DB.app = { store, S, render, openAmount, openDay, addPhotos };   // 디버깅·테스트용
+    DB.app = { store, S, render, openAmount, openDay, addPhotos, cloud };   // 디버깅·테스트용
+    if (cloud.configured && cloud.loggedIn) {
+      loadAcct();
+      // 처음 한 번(또는 기록을 옮긴 직후) 이 기기의 사진을 계정으로 올림
+      let done = null; try { done = root.localStorage.getItem('drinkBalance.photosUp:' + cloud.session.user.id); } catch (e) { /* 무시 */ }
+      if (sel.mode === 'cloud' && (sel.migrated || !done)) {
+        const ids = []; Object.keys(store.raw().days).forEach(d => (store.raw().days[d].photos || []).forEach(i => ids.push(i)));
+        DB.photos.uploadLocal(ids).then(() => { try { root.localStorage.setItem('drinkBalance.photosUp:' + cloud.session.user.id, '1'); } catch (e) { /* 무시 */ } });
+      }
+    }
   }
   boot();
 })(typeof window !== 'undefined' ? window : globalThis);

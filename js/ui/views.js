@@ -35,7 +35,7 @@
     const { niceDate, r1, r2, fmtQty, qtyLabel, TYPE_LABEL } = calc;
     const catOf = p => p.cat === 'custom' ? 'etc' : p.cat;
     const srcList = list => list.map(x => `${esc(x.org)}, ${esc(x.title)} (${esc(x.year)}) ${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">원문</a>` : ''}`).join('<br>');
-    const topbar = () => '<header class="topbar"><span class="brand">드링크 밸런스</span></header>';
+    const topbar = () => `<header class="topbar"><span class="brand">드링크 밸런스</span>${ctx.cloud && ctx.cloud.configured && ctx.cloud.loggedIn ? '<button class="pill ghost sm" data-act="friendsTab">👥 친구</button>' : ''}</header>`;
     const monthRange = ym => { const [y, m] = ym.split('-').map(Number); return { from: `${y}-${calc.pad(m)}-01`, to: calc.fmt(new Date(y, m, 0)) }; };
     const STATUS_LABEL = { ok: '기준 이내', warn: '경고', sober: '금주', none: '기록 없음' };
 
@@ -319,19 +319,69 @@
     function settings() {
       const pf = store.profile, info = ctx.storageInfo();
       return `${topbar()}<div class="page-head"><div><h1>설정</h1></div></div>
-        <section class="card"><h3 class="card-h">내 정보 <small>건강 기준 선택용</small></h3><div class="note">이 정보는 이 기기(또는 내 서버)에만 저장되며 외부로 전송되지 않습니다. 선택하지 않으면 더 낮은(보수적인) 기준을 사용합니다.</div>
+        ${accountCard()}
+        <section class="card"><h3 class="card-h">내 정보 <small>건강 기준 선택용</small></h3><div class="note">${ctx.cloud && ctx.cloud.loggedIn ? '이 정보는 내 계정(클라우드)에 저장됩니다. <b>친구에게는 성별 설정만 보이고, 나이·임신 설정은 공유되지 않습니다.</b>' : '이 정보는 이 기기(또는 내 서버)에만 저장되며 외부로 전송되지 않습니다.'} 선택하지 않으면 더 낮은(보수적인) 기준을 사용합니다.</div>
           <div class="field"><span>성별</span><div class="chips">${[['unset', '선택 안 함'], ['female', '여성'], ['male', '남성']].map(([k, n]) => `<button class="chip ${pf.sex === k ? 'on' : ''}" data-act="sex" data-v="${k}">${n}</button>`).join('')}</div></div>
           <label class="field"><span>나이 (선택)</span><input id="ageIn" inputmode="numeric" value="${esc(pf.age)}" placeholder="예: 34"></label>
           <label class="chk"><input type="checkbox" id="pregIn" ${pf.pregnant ? 'checked' : ''}> 임신 중이거나 임신을 계획 중입니다</label></section>
         <section class="card"><h3 class="card-h">제품 값 초기화</h3><div class="note">기록할 때 수정해서 저장한 도수·용량을 모두 기본값으로 되돌립니다. (과거 기록은 바뀌지 않습니다.)</div><button class="btn ghost" data-act="resetOv">수정한 제품 값 초기화</button></section>
         <section class="card"><h3 class="card-h">직접 추가한 제품 (${store.custom.length})</h3>${store.custom.map(c => `<div class="ent"><div class="t"><b>${esc(c.name)}</b><span>${esc(CAT_NAME[c.cat] || '')} · ${c.abv}%</span></div><button class="btn danger sm" data-act="delCustom" data-v="${c.id}">삭제</button></div>`).join('') || '<div class="note">없음</div>'}</section>
-        <section class="card"><h3 class="card-h">데이터</h3><div class="note">저장 위치: <b>${info.mode === 'remote' ? '내 PC의 서버 (server/data/db.json)' : '이 브라우저(localStorage)'}</b>. 외부로 전송되지 않습니다. 다른 곳으로 옮기려면 백업 파일을 사용하세요. <b>사진은 이 브라우저에 따로 저장되어 백업 파일에 들어가지 않습니다</b>(브라우저 데이터를 지우면 사진도 사라져요).</div>
+        <section class="card"><h3 class="card-h">데이터</h3><div class="note">저장 위치: <b>${info.mode === 'cloud' ? '내 계정(클라우드)' : info.mode === 'remote' ? '내 PC의 서버 (server/data/db.json)' : '이 브라우저(localStorage)'}</b>.${info.mode === 'cloud' ? '' : ' 외부로 전송되지 않습니다.'} 다른 곳으로 옮기려면 백업 파일을 사용하세요. <b>사진은 백업 파일에 들어가지 않습니다</b>(${info.mode === 'cloud' ? '계정에 따로 보관돼요' : '이 브라우저에만 있어서 브라우저 데이터를 지우면 사라져요'}).</div>
           <div class="row gap8 wrap"><button class="btn ghost sm" data-act="export">백업 내보내기</button><label class="btn ghost sm pointer">백업 가져오기<input type="file" id="importIn" accept="application/json" hidden></label><button class="btn danger sm" data-act="wipe">전체 삭제</button></div></section>
         <section class="card"><h3 class="card-h">이미지·정보 안내</h3><div class="note">이미지가 없는 제품은 임시로 직접 그린 일러스트를 보여 줍니다. 용량·도수는 2026-11-27 조사한 참고값이며 제조사 공식 값이 아닌 항목이 많으니 라벨을 확인해 수정해 주세요.</div></section>
         <div class="disc">${esc(GUIDE.DISCLAIMER)}</div>`;
     }
 
-    return { photoView, nav, cal, rec, amount, amountLive, day, warn, custom, stats: statsView, report, settings };
+    /* ---------- 계정·친구 (클라우드) ---------- */
+    function accountCard() {
+      const c = ctx.cloud;
+      if (!c || !c.configured) return '<section class="card"><h3 class="card-h">계정·친구</h3><div class="note">클라우드 연결이 아직 설정되지 않았어요. 연결하면 로그인해서 기록·사진을 계정에 보관하고 친구와 공유할 수 있어요.</div></section>';
+      if (!c.loggedIn) return `<section class="card"><h3 class="card-h">계정·친구</h3><div class="note">로그인하면 기록과 사진이 내 계정(클라우드)에 보관되고, 친구에게 <b>기록·메모·컨디션·사진·성별 설정</b>이 보여요. 임신·나이 설정은 공유되지 않아요. 로그인하지 않으면 지금처럼 이 기기에만 저장돼요.</div>
+        <label class="field"><span>이메일</span><input id="emailIn" type="email" autocomplete="email" placeholder="you@example.com"></label>
+        <label class="field"><span>비밀번호 (6자 이상)</span><input id="pwIn" type="password" autocomplete="current-password"></label>
+        <div class="row gap8"><button class="btn sm" data-act="login">로그인</button><button class="btn ghost sm" data-act="signup">새로 가입</button></div></section>`;
+      const p = S.acct.profile || {}, hasStash = (() => { try { return !!root.localStorage.getItem(DB.api.BACKUP_KEY); } catch (e) { return false; } })();
+      return `<section class="card"><h3 class="card-h">계정·친구</h3><div class="note">로그인: <b>${esc(c.session.user.email)}</b></div>
+        <div class="field"><span>내 친구 코드 (친구에게 알려 주세요)</span><div class="fcode-row"><b class="fcode">${esc(p.friend_code || '불러오는 중…')}</b><button class="btn ghost sm" data-act="copyCode">복사</button></div></div>
+        <label class="field"><span>표시 이름 (친구에게 보이는 이름)</span><input id="nameIn" maxlength="20" value="${esc(p.display_name || '')}" placeholder="예: 민수"></label>
+        <div class="row gap8 wrap"><button class="btn sm" data-act="saveName">이름 저장</button><button class="btn soft sm" data-act="friendsTab">👥 친구 보기</button><button class="btn ghost sm" data-act="logout">로그아웃</button>${hasStash ? '<button class="btn ghost sm" data-act="exportStash">이 기기 기록 내려받기</button>' : ''}</div></section>`;
+    }
+    const STAT_ICON = { ok: '', warn: '⚠ ', sober: '✔ ', none: '' };
+    function friendDays(fs, ym) {
+      const r = monthRange(ym), days = stats.daysIn(r).filter(d => fs.isRecorded(d) || fs.photosOf(d).length).reverse();
+      if (!days.length) return '<div class="empty tight">이 달에는 기록이 없어요.</div>';
+      return days.map(d => {
+        const es = fs.entriesOf(d), day = fs.dayOf(d) || {}, st = fs.dayStatus(d), owner = S.fr.view.id;
+        return `<section class="card fday"><div class="day-head"><div class="sp"><h3>${niceDate(d)}</h3></div><span class="pill st-${st}">${STAT_ICON[st]}${STATUS_LABEL[st]}</span></div>
+          ${es.length ? `<div class="total"><span class="sub">총 순수 알코올</span><b>${r1(fs.gOf(d))}g</b></div>${es.map(e => `<div class="fent"><b>${esc(e.name)}</b> <span class="sub">${esc(qtyLabel(e))} · ${e.abv}% · ${r1(e.g)}g</span></div>`).join('')}` : (day.sober ? '<div class="sub">금주했어요</div>' : '')}
+          ${(day.cond || []).length ? `<div class="sub">컨디션: ${(day.cond || []).map(k => { const s = GUIDE.SYMPTOMS.find(x => x.k === k); return esc(s ? s.label : k); }).join(', ')}</div>` : ''}
+          ${day.memo ? `<div class="fmemo">${esc(day.memo)}</div>` : ''}
+          ${(day.photos || []).length ? `<div class="pthumbs">${day.photos.map(id => `<button class="pthumb" data-act="fphotoView" data-v="${owner}|${id}" aria-label="사진 크게 보기"><img data-fphoto="${owner}|${id}" alt="${niceDate(d)} 사진"></button>`).join('')}</div>` : ''}</section>`;
+      }).join('');
+    }
+    const fphotoView = (o, id) => `<h2>친구 사진</h2><img class="photo-big" data-fphoto="${o}|${id}" alt="친구 사진"><div class="row gap8 mt12"><button class="btn ghost sm" data-act="closeSheet">닫기</button></div>`;
+    function friends() {
+      const fr = S.fr, v = fr.view;
+      if (v) {
+        const fs = v.store, ym = v.month, [y, mo] = ym.split('-').map(Number), sm = fs ? stats.summarize(fs, monthRange(ym)) : null;
+        return `<div class="sc-head"><button class="icon-btn x" data-act="friendBack" aria-label="뒤로">${I.back}</button><span>${esc(v.name)}님의 기록</span></div>
+          <div class="cal-head"><h2>${y}년 ${mo}월</h2><button class="icon-btn" data-act="friendMonth" data-v="-1" aria-label="이전 달">${I.prev}</button><button class="icon-btn" data-act="friendMonth" data-v="1" aria-label="다음 달">${I.next}</button></div>
+          <div class="note">읽기 전용이에요. 친구가 공유한 기록만 보여요.</div>
+          ${v.err ? `<div class="alert"><div class="alert-txt">${esc(v.err)}</div></div>` : !fs ? '<div class="empty">불러오는 중…</div>' : `<div class="stat-chips"><span class="chip-stat">음주 <b>${sm.drink.length}일</b></span><span class="chip-stat tint">금주 <b>${sm.sober.length}일</b></span><span class="chip-stat">순수 알코올 <b>${r1(sm.total)}g</b></span></div>${friendDays(fs, ym)}`}
+          <div class="disc">${esc(GUIDE.DISCLAIMER)}</div>`;
+      }
+      const list = fr.list || [], acc = list.filter(f => f.status === 'accepted'), inc = list.filter(f => f.status === 'pending' && f.direction === 'incoming'), out = list.filter(f => f.status === 'pending' && f.direction === 'outgoing');
+      const row = (f, btns) => `<div class="ent"><div class="t"><b>${esc(f.name)}</b><span>코드 ${esc(f.code)}</span></div>${btns}</div>`;
+      return `<div class="sc-head"><button class="icon-btn x" data-act="tab" data-v="set" aria-label="뒤로">${I.back}</button><span>친구</span></div>
+        <section class="card"><h3 class="card-h">친구 추가</h3><div class="note">친구에게 받은 친구 코드를 입력하세요. 상대가 수락하면 서로의 기록과 사진이 보여요.</div>
+          <div class="row gap8"><input id="fcode" class="grow" placeholder="친구 코드" autocapitalize="characters" autocomplete="off"><button class="btn sm" data-act="friendAdd">요청 보내기</button></div></section>
+        ${fr.err ? `<div class="alert"><div class="alert-txt">${esc(fr.err)}</div></div>` : ''}
+        ${inc.length ? `<section class="card"><h3 class="card-h">받은 요청</h3>${inc.map(f => row(f, `<button class="btn sm" data-act="friendAccept" data-v="${f.friend_id}">수락</button><button class="btn ghost sm" data-act="friendRemove" data-v="${f.friend_id}">거절</button>`)).join('')}</section>` : ''}
+        <section class="card"><h3 class="card-h">내 친구 (${acc.length})</h3>${acc.length ? acc.map(f => row(f, `<button class="btn soft sm" data-act="friendOpen" data-v="${f.friend_id}">기록 보기</button><button class="btn ghost sm" data-act="friendRemove" data-v="${f.friend_id}">끊기</button>`)).join('') : `<div class="empty tight">${fr.list ? '아직 친구가 없어요.' : '불러오는 중…'}</div>`}</section>
+        ${out.length ? `<section class="card"><h3 class="card-h">보낸 요청</h3>${out.map(f => row(f, `<span class="sub">수락 대기 중</span><button class="btn ghost sm" data-act="friendRemove" data-v="${f.friend_id}">취소</button>`)).join('')}</section>` : ''}`;
+    }
+
+    return { fphotoView, friends, photoView, nav, cal, rec, amount, amountLive, day, warn, custom, stats: statsView, report, settings };
   }
   DB.createViews = createViews;
 })(typeof window !== 'undefined' ? window : globalThis);

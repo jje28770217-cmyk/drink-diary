@@ -30,16 +30,37 @@
     if (bmp.close) bmp.close();
     return new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('사진 변환 실패')), 'image/jpeg', 0.82));
   }
+  let cloud = null;   // 로그인 상태의 클라우드 클라이언트(없으면 이 기기에만 저장)
+  const setCloud = c => { cloud = c && c.configured && c.loggedIn ? c : null; };
   async function put(blob) {
     const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-    await tx('readwrite', s => s.put({ blob, at: Date.now() }, id)); return id;
+    await tx('readwrite', s => s.put({ blob, at: Date.now() }, id));
+    if (cloud) cloud.uploadPhoto(id, blob).catch(() => { });   // 업로드 실패해도 이 기기에는 저장됨
+    return id;
+  }
+  /** 이 기기에 있는 사진을 클라우드로 올림(이미 있으면 덮어씀). 올린 개수를 돌려줌 */
+  async function uploadLocal(ids) {
+    let n = 0; if (!cloud) return 0;
+    for (const id of ids) { try { const rec = await tx('readonly', s => s.get(id)); if (rec) { await cloud.uploadPhoto(id, rec.blob); n++; } } catch (e) { /* 다음 접속 때 다시 */ } }
+    return n;
   }
   async function url(id) {
     if (urls.has(id)) return urls.get(id);
-    const rec = await tx('readonly', s => s.get(id)); if (!rec) return null;
+    let rec = await tx('readonly', s => s.get(id));
+    if (!rec && cloud) {   // 다른 기기에서 올린 내 사진: 클라우드에서 받아 이 기기에도 보관
+      try { const b = await cloud.downloadPhoto(cloud.session.user.id, id); if (b) { rec = { blob: b, at: Date.now() }; await tx('readwrite', s => s.put(rec, id)); } } catch (e) { /* 오프라인 */ }
+    }
+    if (!rec) return null;
     const u = root.URL.createObjectURL(rec.blob); urls.set(id, u); return u;
   }
-  async function remove(id) { await tx('readwrite', s => s.delete(id)); if (urls.has(id)) { root.URL.revokeObjectURL(urls.get(id)); urls.delete(id); } }
+  /** 친구의 사진(읽기 전용, 이 기기에는 저장하지 않음) */
+  async function friendUrl(ownerId, id) {
+    const k = ownerId + '/' + id; if (urls.has(k)) return urls.get(k);
+    if (!cloud) return null;
+    const b = await cloud.downloadPhoto(ownerId, id); if (!b) return null;
+    const u = root.URL.createObjectURL(b); urls.set(k, u); return u;
+  }
+  async function remove(id) { if (cloud) cloud.deletePhoto(id).catch(() => { }); await tx('readwrite', s => s.delete(id)); if (urls.has(id)) { root.URL.revokeObjectURL(urls.get(id)); urls.delete(id); } }
   async function clear() { await tx('readwrite', s => s.clear()); urls.forEach(u => root.URL.revokeObjectURL(u)); urls.clear(); }
-  (root.DB = root.DB || {}).photos = { shrink, put, url, remove, clear };
+  (root.DB = root.DB || {}).photos = { shrink, put, url, friendUrl, remove, clear, setCloud, uploadLocal };
 })(typeof window !== 'undefined' ? window : globalThis);
