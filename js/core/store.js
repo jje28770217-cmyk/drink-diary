@@ -77,7 +77,7 @@
 
     /* ---------- 기록 변경 ---------- */
     function ensureDay(s) { return state.days[s] || (state.days[s] = { entries: [] }); }
-    function cleanDay(s) { const d = state.days[s]; if (d && !d.entries.length && !d.sober && !d.memo && !(d.cond || []).length && !d.start && !d.end) delete state.days[s]; }
+    function cleanDay(s) { const d = state.days[s]; if (d && !d.entries.length && !d.sober && !d.memo && !(d.cond || []).length && !d.start && !d.end && !(d.photos || []).length) delete state.days[s]; }
     /** 기록 추가(또는 같은 id가 있으면 수정). 음주 기록이 생기면 금주 표시는 해제 */
     function saveEntry(date, e) {
       const d = ensureDay(date); d.sober = false;
@@ -88,6 +88,10 @@
     function deleteEntry(date, id) { const d = state.days[date]; if (!d) return false; d.entries = d.entries.filter(x => x.id !== id); cleanDay(date); persist(); return true; }
     function toggleSober(date) { const d = ensureDay(date); d.sober = !d.sober; cleanDay(date); persist(); return !!(state.days[date] && state.days[date].sober); }
     function setDayField(date, field, value) { ensureDay(date)[field] = value; persist(); }
+    /** 사진: 기록에는 사진 id 만 보관(파일은 api/photos). 개수 제한 없음 */
+    const photosOf = s => (state.days[s] && state.days[s].photos) || [];
+    function addPhoto(date, id) { const d = ensureDay(date); d.photos = d.photos || []; if (!d.photos.includes(id)) d.photos.push(id); persist(); }
+    function removePhoto(date, id) { const d = state.days[date]; if (!d || !d.photos) return false; d.photos = d.photos.filter(x => x !== id); if (!d.photos.length) delete d.photos; cleanDay(date); persist(); return true; }
     function toggleSymptom(date, k) { const d = ensureDay(date); d.cond = d.cond || []; const i = d.cond.indexOf(k); if (i >= 0) d.cond.splice(i, 1); else d.cond.push(k); cleanDay(date); persist(); }
 
     /* ---------- 제품 관련 설정 ---------- */
@@ -117,7 +121,7 @@
     function importData(obj) { if (!obj || typeof obj.days !== 'object') throw new Error('올바른 백업 파일이 아닙니다'); state = normalize(obj); persist(); }
     function wipe() { state = blank(); persist(); }
 
-    return { load, flush, raw, allProducts, getProduct, effAbv, effMl, imageId, thumbId, dayOf, entriesOf, gOf, weekSum, streak, isRecorded, analyze, dayStatus,
+    return { load, flush, raw, allProducts, getProduct, effAbv, effMl, imageId, thumbId, dayOf, entriesOf, gOf, weekSum, streak, isRecorded, analyze, dayStatus, photosOf, addPhoto, removePhoto,
       saveEntry, deleteEntry, toggleSober, setDayField, toggleSymptom, toggleFav, touchRecent, saveOverride, addCustom, deleteCustom, resetOverrides, setProfile, exportJSON, importData, wipe,
       get profile() { return state.profile; }, get fav() { return state.fav; }, get recent() { return state.recent; }, get custom() { return state.custom; } };
   }

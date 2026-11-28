@@ -14,7 +14,7 @@
   function render() {
     $('#nav').innerHTML = views.nav();
     const v = { cal: views.cal, rec: views.rec, stats: views.stats, report: views.report, set: views.settings }[S.tab];
-    $('#app').innerHTML = v();
+    $('#app').innerHTML = v(); hydrate();
     if (S.tab === 'rec' && S.keepFocus) { const i = $('#q'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } S.keepFocus = false; }
   }
   const renderAmount = () => { $('#amount').innerHTML = views.amount(draft); };
@@ -25,7 +25,23 @@
     if (!d) return; draft = d; renderAmount(); $('#amount').hidden = false; $('#amount').scrollTop = 0;
   }
   const closeAmount = () => { draft = null; $('#amount').hidden = true; };
-  function openSheet(html) { $('#sheet').innerHTML = html; $('#sheetWrap').hidden = false; $('#sheet').scrollTop = 0; }
+  /** 사진 칸(img[data-photo])에 저장된 사진을 채움. 파일이 없으면(백업 가져오기 등) 안내 문구로 바꿈 */
+  function hydrate() {
+    doc.querySelectorAll('img[data-photo]:not([data-ok])').forEach(img => {
+      img.dataset.ok = '1';
+      DB.photos.url(img.dataset.photo).then(u => { if (u) img.src = u; else img.replaceWith(Object.assign(doc.createElement('span'), { className: 'pmiss', textContent: '사진 없음' })); }).catch(() => { });
+    });
+  }
+  async function addPhotos(date, files) {
+    let n = 0, bad = 0;
+    for (const f of Array.from(files)) {
+      try { const id = await DB.photos.put(await DB.photos.shrink(f)); store.addPhoto(date, id); n++; } catch (e) { bad++; }
+    }
+    S.sel = date; render(); if (!$('#sheetWrap').hidden && $('#sheet').dataset.date === date) openDay(date);
+    toast(bad ? `${n}장 추가, ${bad}장은 읽지 못했어요 (지원하지 않는 형식일 수 있어요)` : `사진 ${n}장을 추가했어요`);
+    return { n, bad };
+  }
+  function openSheet(html) { $('#sheet').innerHTML = html; hydrate(); $('#sheetWrap').hidden = false; $('#sheet').scrollTop = 0; }
   const closeSheet = () => { $('#sheetWrap').hidden = true; };
   function openDay(s) { openSheet(views.day(s)); $('#sheet').dataset.date = s; }
   function openWarn(s, fresh) { if (!store.analyze(s).reasons.length) return openDay(s); openSheet(views.warn(s, fresh)); }
@@ -65,6 +81,8 @@
       case 'sober': { const on = store.toggleSober(v); S.sel = v; closeSheet(); render(); toast(on ? '금주일로 기록했어요' : '금주 기록을 취소했어요'); break; }
       case 'editEntry': { const [s, id] = v.split('|'); const e = store.entriesOf(s).find(x => x.id === id); if (!e) break; closeSheet(); if (!store.getProduct(e.pid)) { toast('삭제된 제품이라 수정할 수 없어요'); break; } openAmount(e.pid, { date: s, entry: e }); break; }
       case 'delEntry': { const [s, id] = v.split('|'); if (!root.confirm('이 기록을 삭제할까요?')) break; store.deleteEntry(s, id); render(); if (!$('#sheetWrap').hidden) openDay(s); break; }
+      case 'photoView': { const [s, id] = v.split('|'); openSheet(views.photoView(s, id)); break; }
+      case 'delPhoto': { const [s, id] = v.split('|'); if (!root.confirm('이 사진을 삭제할까요?')) break; store.removePhoto(s, id); DB.photos.remove(id).catch(() => { }); closeSheet(); render(); toast('사진을 삭제했어요'); break; }
       case 'sym': { const [s, k] = v.split('|'); store.toggleSymptom(s, k); render(); openDay(s); break; }
       case 'addCustom': S.cc = { cat: 'etc', unit: 'bottle' }; openSheet(views.custom()); break;
       case 'cCat': S.cc.cat = v; el.parentNode.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c === el)); break;
@@ -79,7 +97,7 @@
       case 'resetOv': if (root.confirm('수정한 제품 값을 모두 기본값으로 되돌릴까요?')) { store.resetOverrides(); toast('초기화했어요'); } break;
       case 'delCustom': if (root.confirm('이 제품을 삭제할까요? (과거 기록은 유지됩니다)')) { store.deleteCustom(v); render(); } break;
       case 'export': { const b = new Blob([store.exportJSON()], { type: 'application/json' }), a = doc.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'drink-balance-backup-' + calc.todayS() + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); break; }
-      case 'wipe': if (root.confirm('모든 기록을 삭제할까요? 되돌릴 수 없습니다.') && root.confirm('정말 전체 삭제할까요?')) { store.wipe(); render(); toast('전체 삭제했어요'); } break;
+      case 'wipe': if (root.confirm('모든 기록을 삭제할까요? 되돌릴 수 없습니다.') && root.confirm('정말 전체 삭제할까요?')) { store.wipe(); DB.photos.clear().catch(() => { }); render(); toast('전체 삭제했어요'); } break;
     }
   });
   doc.addEventListener('keydown', ev => {
@@ -101,6 +119,7 @@
   doc.addEventListener('change', ev => {
     const t = ev.target;
     if (t.id === 'dateIn' && t.value) { S.recDate = t.value; render(); }
+    if (t.dataset && t.dataset.photoIn && t.files.length) { addPhotos(t.dataset.photoIn, t.files); t.value = ''; }
     if (t.id === 'importIn' && t.files[0]) {
       const rd = new FileReader();
       rd.onload = () => { try { const o = JSON.parse(rd.result); if (!root.confirm('현재 기록을 백업 파일 내용으로 바꿀까요?')) return; store.importData(o); render(); toast('가져왔어요'); } catch (e) { toast('올바른 백업 파일이 아니에요'); } };
@@ -125,7 +144,7 @@
     views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo });
     render();
     if (sel.note) toast(sel.note);
-    DB.app = { store, S, render, openAmount, openDay };   // 디버깅·테스트용
+    DB.app = { store, S, render, openAmount, openDay, addPhotos };   // 디버깅·테스트용
   }
   boot();
 })(typeof window !== 'undefined' ? window : globalThis);

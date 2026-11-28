@@ -188,3 +188,29 @@ test('캘린더 날짜 상태(dayStatus)·연속 금주·최근 7일 비교', as
   assert.equal(w.sober, 3); assert.ok(Math.abs(w.cur - (calc.gramOf(500, 4.5) + calc.gramOf(700, 40))) < 1e-9);
   assert.equal(w.prev, 0); assert.equal(w.pct, null);
 });
+
+test('경고 누적 횟수에 따라 단계와 권장 행동이 달라진다', () => {
+  const guide = require('../js/data/guidelines.js');
+  const t1 = guide.advise({ monthWarn: 1, yearWarn: 1, monthDrink: 3 });
+  const t2 = guide.advise({ monthWarn: 3, yearWarn: 5, monthDrink: 8 });
+  const t3a = guide.advise({ monthWarn: 4, yearWarn: 6, monthDrink: 12 });
+  const t3b = guide.advise({ monthWarn: 1, yearWarn: 12, monthDrink: 2 });
+  assert.deepEqual([t1.tier, t2.tier, t3a.tier, t3b.tier], [1, 2, 3, 3]);
+  assert.ok(/3번째/.test(t2.headline) && /4회/.test(t3a.headline) && /올해 경고 12회/.test(t3b.headline));
+  assert.ok(t1.actions.length < t3a.actions.length && t1.actions.join() !== t2.actions.join());
+  assert.ok(t3a.actions.some(x => /AUDIT-K/.test(x)));
+  assert.equal(guide.RISKS.length, 4);
+  guide.RISKS.forEach(r => r.papers.forEach(k => assert.ok(guide.PAPERS[k] && /^https:\/\//.test(guide.PAPERS[k].url), k)));
+});
+
+test('사진: 기록에 id 로 붙이고(개수 제한 없음) 지우면 빈 날은 정리된다', async () => {
+  const { store: s } = await newStore();
+  for (let i = 0; i < 12; i++) s.addPhoto('2026-11-10', 'p' + i);
+  s.addPhoto('2026-11-10', 'p0'); // 같은 id 중복 방지
+  assert.equal(s.photosOf('2026-11-10').length, 12);
+  assert.equal(s.isRecorded('2026-11-10'), false); // 사진만 있는 날은 기록/금주로 세지 않음
+  for (let i = 0; i < 12; i++) s.removePhoto('2026-11-10', 'p' + i);
+  assert.equal(s.dayOf('2026-11-10'), undefined);
+  s.toggleSober('2026-11-11'); s.addPhoto('2026-11-11', 'x'); s.toggleSober('2026-11-11');
+  assert.deepEqual(s.photosOf('2026-11-11'), ['x']); // 사진이 있으면 금주 취소해도 날이 남음
+});

@@ -223,3 +223,33 @@ i.dot.warn{background:var(--red)}
 .toast{position:fixed;left:50%;bottom:98px;transform:translate(-50%,20px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:14px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:100;max-width:88vw;text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media(max-width:380px){.pgrid.c4{gap:7px}.cell{min-height:52px}.hero .pic{min-height:210px}}
+
+/* 건강 위험 안내: 누적 횟수 강조 (단계 t1 첫 경고 / t2 반복 / t3 잦은 경고) */
+.risk-hero{border-radius:20px;padding:16px;margin:12px 0;background:var(--amber-soft);border:2px solid var(--amber)}
+.risk-hero.t2{background:var(--red-soft);border-color:var(--red)}
+.risk-hero.t3{background:var(--red);border-color:var(--red);color:#fff}
+.rh-badge{display:inline-block;font-size:12px;font-weight:800;padding:3px 10px;border-radius:999px;background:var(--amber);color:#fff}
+.risk-hero.t2 .rh-badge{background:var(--red)}.risk-hero.t3 .rh-badge{background:#fff;color:var(--red)}
+.risk-hero h3{font-size:18px;line-height:1.35;margin:8px 0 12px;font-weight:800}
+.rh-stats{display:flex;gap:8px}.rh-stats>div{flex:1;background:rgba(255,255,255,.75);border-radius:14px;padding:10px 6px;text-align:center;color:var(--ink)}
+.rh-stats b{display:block;font-size:26px;line-height:1.1;color:var(--red)}.rh-stats small{font-size:11.5px;color:var(--sub)}
+.risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 12px}
+.risk-card{display:flex;gap:8px;background:var(--lav-soft);border-radius:16px;padding:10px 12px}.risk-card>span{font-size:20px}
+.risk-card b{font-size:14px}.risk-card p{font-size:12.5px;line-height:1.5;margin:2px 0 0;color:#3b463f}
+.act-list{margin:6px 0 12px;padding-left:20px;line-height:1.6;font-size:14px;font-weight:600}.act-list li{margin-bottom:4px}
+.more{margin:8px 0}.more summary{font-size:13px;font-weight:700;color:var(--lav-deep);cursor:pointer;padding:6px 0}
+.alert-cnt{margin-top:6px;font-size:13px;font-weight:800;color:var(--red)}
+@media(max-width:380px){.risk-grid{grid-template-columns:1fr}}
+.risk-card .paper{display:block;margin-top:4px;font-size:11px;color:var(--lav-deep);font-weight:700}
+.paper-note{background:var(--lav-soft);border-radius:14px;padding:10px 12px;margin:8px 0;font-size:13px;line-height:1.55}
+.papers{margin:6px 0;padding-left:18px;font-size:12.5px;line-height:1.55}.papers li{margin-bottom:8px}
+.sober-card{display:flex;align-items:center;gap:12px;background:var(--lav-soft);padding:12px 14px;margin:10px 0}
+.sober-card small{display:block;color:var(--sub);font-size:12px;margin-top:2px}
+
+/* 기록 사진 */
+.photos{margin:12px 0}.photos .muted-h small{font-weight:600;color:var(--sub)}
+.pthumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}
+.pthumb{padding:0;border:0;background:var(--tile);border-radius:14px;overflow:hidden;aspect-ratio:1;cursor:pointer}
+.pthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.pmiss{display:grid;place-items:center;height:100%;font-size:12px;color:var(--sub)}
+.photo-big{width:100%;max-height:70vh;object-fit:contain;border-radius:16px;background:var(--tile);display:block;margin-top:8px}

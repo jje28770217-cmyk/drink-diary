@@ -30,7 +30,7 @@ async function scenario(b, url, label, expectRemote) {
   ok('상세 시트: 총 순수 알코올·하루 정보 입력칸', /총 순수 알코올/.test(await b.eval(`txt('#sheet')`)) && /시작 시간/.test(await b.eval(`txt('#sheet')`)));
   await b.eval(`c('[data-act=closeSheet]'); c('.day-card [data-act=editEntry]'); c('[data-act=qty][data-v="1"]'); c('#saveBtn'); true`);
   const warnTxt = await b.eval(`txt('#sheet')`);
-  ok('수정 후 하루 기준 초과 → 경고 시트(이유·출처)', !document_hidden(await b.eval(`document.getElementById('sheetWrap').hidden`)) && /경고가 발생한 이유/.test(warnTxt) && /정보 출처/.test(warnTxt));
+  ok('수정 후 하루 기준 초과 → 경고 시트(이유·누적 횟수·권장 행동·출처)', !document_hidden(await b.eval(`document.getElementById('sheetWrap').hidden`)) && /경고가 발생한 이유/.test(warnTxt) && /판단 기준·출처 보기/.test(warnTxt) && /이번 달 경고/.test(warnTxt) && /지금 권장하는 행동/.test(warnTxt));
   await b.eval(`c('[data-act=closeSheet]'); true`);
   ok('캘린더 경고 표시(빨간 아이콘)', await b.eval(`!!document.querySelector('.cell.today.st-warn .mk.drink.warn')`));
   // 5) 삭제
@@ -69,12 +69,29 @@ async function scenario(b, url, label, expectRemote) {
   await b.eval(`c('[data-act=tab][data-v=set]'); true`);
   const set = await b.eval(`txt('#app')`);
   ok('설정의 저장 위치 표시', expectRemote ? /내 PC의 서버/.test(set) : /이 브라우저/.test(set));
+  // 10-2) 사진: 개수 제한 없이 추가(5장) → 화면에 표시 → 새로고침 후에도 유지 → 삭제
+  const mk = `async n => { const c = document.createElement('canvas'); c.width = 2400; c.height = 1800; const g = c.getContext('2d'); g.fillStyle = 'hsl(' + (n * 60) + ',70%,50%)'; g.fillRect(0, 0, 2400, 1800); return new File([await new Promise(r => c.toBlob(r, 'image/png'))], 'p' + n + '.png', { type: 'image/png' }); }`;
+  await b.eval(`c('[data-act=tab][data-v=cal]'); true`);
+  const pr = await b.eval(`(async () => { const mk = ${mk}; const fs = []; for (let i = 0; i < 5; i++) fs.push(await mk(i)); return JSON.stringify(await DB.app.addPhotos(DB.calc.todayS(), fs)); })()`);
+  ok('사진 5장 추가(개수 제한 없음)', JSON.parse(pr).n === 5 && JSON.parse(pr).bad === 0, pr);
+  await sleep(500);
+  const shown = await b.eval(`[...document.querySelectorAll('#app img[data-photo]')].filter(i => i.src.startsWith('blob:')).length`);
+  ok('캘린더 날짜 카드에 사진 5장 표시', shown === 5, '표시 ' + shown);
+  const dim = await b.eval(`(async () => { const id = DB.app.store.photosOf(DB.calc.todayS())[0]; const u = await DB.photos.url(id); const im = new Image(); im.src = u; await im.decode(); return im.naturalWidth + 'x' + im.naturalHeight; })()`);
+  ok('사진이 긴 변 1280px 이하로 줄어 저장됨', dim === '1280x960', dim);
+  await b.eval(`DB.app.store.flush()`); await sleep(400);
   // 11) 저장 유지: 새로고침 후에도 남아 있는지
   await b.eval(`DB.app.store.flush()`); await sleep(400);
   const before = await b.eval(`DB.app.store.entriesOf(DB.calc.todayS()).length`);
   await b.goto(url); for (let i = 0; i < 40; i++) { if (await b.eval('!!(window.DB && DB.app)')) break; await sleep(150); }
   const after = await b.eval(`DB.app.store.entriesOf(DB.calc.todayS()).length`);
   ok('새로고침 후 기록 유지', before > 0 && before === after, before + '→' + after);
+  await sleep(500);
+  const pAfter = await b.eval(`DB.app.store.photosOf(DB.calc.todayS()).length`);
+  const pLoad = await b.eval(`(async () => { const ids = DB.app.store.photosOf(DB.calc.todayS()); const us = await Promise.all(ids.map(i => DB.photos.url(i))); return us.filter(Boolean).length; })()`);
+  ok('새로고침 후 사진 유지(기록 5건·파일 5개)', pAfter === 5 && pLoad === 5, pAfter + '/' + pLoad);
+  await b.eval(`(async () => { const s = DB.app.store, d = DB.calc.todayS(); for (const id of s.photosOf(d).slice()) { s.removePhoto(d, id); await DB.photos.remove(id); } DB.app.render(); })()`);
+  ok('사진 삭제 후 0장', (await b.eval(`DB.app.store.photosOf(DB.calc.todayS()).length`)) === 0);
   ok('콘솔 오류 없음', b.logs.length === 0, b.logs.join(' | '));
   console.log('\n== ' + label + ' ==\n' + R.join('\n')); return R;
 }

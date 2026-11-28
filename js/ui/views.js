@@ -47,6 +47,13 @@
         ${t('report', '리포트')}${t('set', '설정')}</div>`;
     }
 
+    /* ---------- 사진 ---------- */
+    function photoBlock(s) {
+      const ids = store.photosOf(s);
+      return `<div class="photos"><div class="muted-h">사진${ids.length ? ` <small>${ids.length}장</small>` : ''}</div>${ids.length ? `<div class="pthumbs">${ids.map(id => `<button class="pthumb" data-act="photoView" data-v="${s}|${id}" aria-label="사진 크게 보기"><img data-photo="${id}" alt="${niceDate(s)} 사진"></button>`).join('')}</div>` : ''}<label class="btn soft sm pointer">📷 사진 추가<input type="file" data-photo-in="${s}" accept="image/*" multiple hidden></label></div>`;
+    }
+    const photoView = (s, id) => `<h2>${niceDate(s)}</h2><img class="photo-big" data-photo="${id}" alt="${niceDate(s)} 사진"><div class="row gap8 mt12"><button class="btn danger sm" data-act="delPhoto" data-v="${s}|${id}">삭제</button><button class="btn ghost sm" data-act="closeSheet">닫기</button></div>`;
+
     /* ---------- 캘린더 ---------- */
     function dayCard(s) {
       const es = store.entriesOf(s), d = store.dayOf(s) || {}, st = store.dayStatus(s), g = store.gOf(s), th = GUIDE.thresholds(store.profile), a = es.length ? store.analyze(s) : null;
@@ -64,6 +71,7 @@
       } else body = `<div class="empty tight">${d.sober ? '금주일로 기록했어요.' : '이 날은 기록이 없어요. 기록하지 않은 날은 금주로 계산하지 않아요.'}</div>`;
       return `<section class="card day-card"><div class="day-head"><span class="round">${I.day}</span><div class="sp"><h3>${niceDate(s)}</h3>${d.memo ? `<small>${esc(d.memo)}</small>` : ''}</div><span class="pill st-${st}">${STATUS_LABEL[st]}</span></div>
         ${body}
+        ${photoBlock(s)}
         <div class="btn-row"><button class="btn soft" data-act="addTo" data-v="${s}">${I.plus}기록 추가</button>
           ${!es.length ? `<button class="btn tint" data-act="sober" data-v="${s}">${I.leaf}${d.sober ? '금주 기록 취소' : '금주일로 기록'}</button>` : ''}
           ${bad ? `<button class="btn danger" data-act="warn" data-v="${s}">${I.bell}경고 이유 보기</button>` : ''}</div>
@@ -122,6 +130,7 @@
         <div class="row center-row"><button class="pill ghost" data-act="pickDate">${niceDate(S.recDate)} ▾</button></div>
         <input type="date" id="dateIn" class="hidden-date" value="${S.recDate}" max="${calc.todayS()}">
         ${es.length || (store.dayOf(S.recDate) && store.dayOf(S.recDate).sober) ? `<div class="today-bar" data-act="daySheet" data-v="${S.recDate}" role="button"><span>이 날 기록 <b>${es.length}건</b> · 순수 알코올 <b>${r1(g)}g</b></span><span class="sp"></span><span>보기 ›</span></div>` : ''}
+        ${!es.length ? `<div class="card sober-card"><div class="sp"><b>${niceDate(S.recDate)}, 술을 안 마셨나요?</b><small>입력을 깜빡했어도 날짜를 골라 금주로 남길 수 있어요.</small></div><button class="btn ${store.dayOf(S.recDate) && store.dayOf(S.recDate).sober ? 'ghost' : ''} sm" data-act="sober" data-v="${S.recDate}">${store.dayOf(S.recDate) && store.dayOf(S.recDate).sober ? '금주 기록 취소' : '금주했어요!'}</button></div>` : ''}
         <label class="search"><span aria-hidden="true">${I.search}</span><input id="q" type="search" placeholder="주류를 검색해 보세요 (예: 참이슬, 카스)" value="${esc(S.q)}" autocomplete="off"></label>
         <div class="chips">${CATS.map(([k, n]) => `<button class="chip ${S.cat === k && !q ? 'on' : ''}" data-act="cat" data-v="${k}">${n}</button>`).join('')}</div>
         ${body}
@@ -192,7 +201,8 @@
         ${es.length ? `<div class="total"><span class="sub">총 순수 알코올</span><b>${r1(g)}g</b><span class="sub">· ${Math.round(es.reduce((x, e) => x + e.ml, 0))}mL</span></div>` : '<div class="empty tight">기록이 없어요.</div>'}
         ${es.map(e => `<div class="ent"><span class="ptile xs">${img(e.icon, 1, { h: SIZE.row, shadowRx: 11 })}</span><div class="t"><b>${esc(e.name)}</b><span>${esc(qtyLabel(e))} · ${Math.round(e.ml)}mL · ${e.abv}% · ${r1(e.g)}g</span></div>
           <button class="btn ghost sm" data-act="editEntry" data-v="${s}|${e.id}">수정</button><button class="btn danger sm" data-act="delEntry" data-v="${s}|${e.id}">삭제</button></div>`).join('')}
-        ${a && a.level === 'warn' ? `<div class="alert"><h3>⚠ 건강 위험 안내</h3><div class="alert-txt">${a.reasons.map(r => esc(r.text)).join('<br>')}</div><button class="btn sm danger mt8" data-act="warn" data-v="${s}">자세히 보기</button></div>` : ''}
+        ${photoBlock(s)}
+        ${a && a.level === 'warn' ? `<div class="alert"><h3>⚠ 건강 위험 안내</h3><div class="alert-txt">${a.reasons.map(r => esc(r.text)).join('<br>')}</div><div class="alert-cnt">${(() => { const x = GUIDE.advise({ monthWarn: stats.summarize(store, stats.periodRange('month', 0, s)).warn, yearWarn: stats.summarize(store, stats.periodRange('year', 0, s)).warn }); return `이번 달 ${x.monthWarn}회 · 올해 ${x.yearWarn}회 경고`; })()}</div><button class="btn sm danger mt8" data-act="warn" data-v="${s}">자세히 보기</button></div>` : ''}
         ${a && a.level !== 'warn' ? `<div class="disc">현재 기준에서는 경고 조건에 해당하지 않지만, 음주량이 적다고 건강 위험이 없다는 뜻은 아닙니다. ${esc(GUIDE.SAFE_NOTE)}</div>` : ''}
         <div class="row gap8 mt12"><button class="btn" data-act="addTo" data-v="${s}">＋ 술 추가</button>
           ${!es.length ? `<button class="btn ghost" data-act="sober" data-v="${s}">${d.sober ? '금주 기록 취소' : '금주일로 기록'}</button>` : ''}</div>
@@ -203,13 +213,21 @@
         <div class="disc">${esc(GUIDE.DISCLAIMER)}</div>`;
     }
     function warn(s, fresh) {
-      const a = store.analyze(s);
+      const a = store.analyze(s), mo = stats.summarize(store, stats.periodRange('month', 0, s)), yr = stats.summarize(store, stats.periodRange('year', 0, s));
+      const adv = GUIDE.advise({ monthWarn: mo.warn, yearWarn: yr.warn, monthDrink: mo.drink.length });
       return `<h2 class="t-red">⚠ ${fresh ? '기록이 저장됐어요 · ' : ''}건강 위험 안내</h2><div class="sub">${niceDate(s)} · 순수 알코올 ${r1(store.gOf(s))}g · 최근 7일 합계 ${r1(store.weekSum(s))}g</div>
-        <div class="alert"><h3>경고가 발생한 이유</h3><ul>${a.reasons.map(r => `<li>${esc(r.text)}${r.basis ? `<br><span class="sub">기준: ${esc(r.basis)}</span>` : ''}</li>`).join('')}</ul></div>
         ${a.emergency ? `<div class="alert"><h3>⚠ 즉시 도움이 필요할 수 있어요</h3><div class="alert-txt lh">${esc(GUIDE.EMERGENCY)}</div></div>` : ''}
-        <div class="plain"><h3 class="h-sm">음주와 관련된 건강 위험</h3><ul>${GUIDE.RISKS.map(x => `<li>${esc(x)}</li>`).join('')}</ul>
-        <h3 class="h-sm">권장 행동</h3><ul>${GUIDE.ACTIONS.map(x => `<li>${esc(x)}</li>`).join('')}</ul></div>
-        <h3 class="h-sm">정보 출처</h3><div class="src">${srcList(GUIDE.SOURCES)}</div>
+        <div class="risk-hero t${adv.tier}"><span class="rh-badge">${esc(adv.label)}</span><h3>${esc(adv.headline)}</h3>
+          <div class="rh-stats"><div><b>${adv.monthWarn}</b><small>이번 달 경고</small></div><div><b>${adv.yearWarn}</b><small>올해 누적 경고</small></div><div><b>${adv.monthDrink}</b><small>이번 달 음주일</small></div></div></div>
+        <div class="alert"><h3>경고가 발생한 이유</h3><ul>${a.reasons.map(r => `<li>${esc(r.text)}</li>`).join('')}</ul></div>
+        <h3 class="h-sm">음주가 몸에 미치는 위험</h3>
+        <div class="risk-grid">${GUIDE.RISKS.map(x => `<div class="risk-card"><span>${x.icon}</span><div><b>${esc(x.title)}</b><p>${esc(x.text)}</p><small class="paper">📄 ${x.papers.map(k => esc(GUIDE.PAPERS[k].short)).join(' · ')}</small></div></div>`).join('')}</div>
+        ${store.weekSum(s) > 100 ? `<div class="paper-note">📄 최근 7일 합계 ${r1(store.weekSum(s))}g은 연구에서 쓰는 주 100g 기준을 넘었어요. 넘길수록 뇌졸중 위험이 커지고 기대수명이 줄어드는 경향이 있어요 (${esc(GUIDE.PAPERS.wood.short)}).</div>` : ''}
+        <h3 class="h-sm">지금 권장하는 행동</h3><ol class="act-list">${adv.actions.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+        <details class="more"><summary>판단 기준·출처 보기</summary>
+          <ul class="crit">${a.reasons.filter(r => r.basis).map(r => `<li>${esc(r.basis)}</li>`).join('')}<li>경고 횟수 단계(이번 달 2회·4회, 올해 12회)는 앱 자체 규칙이며 공식 기준이 아닙니다. 위험 설명의 출처: ${esc(GUIDE.RISK_SRC)}</li></ul>
+          <div class="src">${srcList(GUIDE.SOURCES)}</div>
+          <h4 class="h-sm">참고 논문</h4><ul class="papers">${Object.keys(GUIDE.PAPERS).map(k => { const p = GUIDE.PAPERS[k]; return `<li><b>${esc(p.short)}</b> — ${esc(p.find)}<br><span class="sub">${esc(p.cite)} <a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">원문</a></span></li>`; }).join('')}</ul><div class="sub">${esc(GUIDE.PAPER_NOTE)}</div></details>
         <div class="disc">${esc(GUIDE.DISCLAIMER)}</div><button class="btn ghost mt12" data-act="closeSheet">확인했어요</button>`;
     }
     function custom() {
@@ -307,13 +325,13 @@
           <label class="chk"><input type="checkbox" id="pregIn" ${pf.pregnant ? 'checked' : ''}> 임신 중이거나 임신을 계획 중입니다</label></section>
         <section class="card"><h3 class="card-h">제품 값 초기화</h3><div class="note">기록할 때 수정해서 저장한 도수·용량을 모두 기본값으로 되돌립니다. (과거 기록은 바뀌지 않습니다.)</div><button class="btn ghost" data-act="resetOv">수정한 제품 값 초기화</button></section>
         <section class="card"><h3 class="card-h">직접 추가한 제품 (${store.custom.length})</h3>${store.custom.map(c => `<div class="ent"><div class="t"><b>${esc(c.name)}</b><span>${esc(CAT_NAME[c.cat] || '')} · ${c.abv}%</span></div><button class="btn danger sm" data-act="delCustom" data-v="${c.id}">삭제</button></div>`).join('') || '<div class="note">없음</div>'}</section>
-        <section class="card"><h3 class="card-h">데이터</h3><div class="note">저장 위치: <b>${info.mode === 'remote' ? '내 PC의 서버 (server/data/db.json)' : '이 브라우저(localStorage)'}</b>. 외부로 전송되지 않습니다. 다른 곳으로 옮기려면 백업 파일을 사용하세요.</div>
+        <section class="card"><h3 class="card-h">데이터</h3><div class="note">저장 위치: <b>${info.mode === 'remote' ? '내 PC의 서버 (server/data/db.json)' : '이 브라우저(localStorage)'}</b>. 외부로 전송되지 않습니다. 다른 곳으로 옮기려면 백업 파일을 사용하세요. <b>사진은 이 브라우저에 따로 저장되어 백업 파일에 들어가지 않습니다</b>(브라우저 데이터를 지우면 사진도 사라져요).</div>
           <div class="row gap8 wrap"><button class="btn ghost sm" data-act="export">백업 내보내기</button><label class="btn ghost sm pointer">백업 가져오기<input type="file" id="importIn" accept="application/json" hidden></label><button class="btn danger sm" data-act="wipe">전체 삭제</button></div></section>
         <section class="card"><h3 class="card-h">이미지·정보 안내</h3><div class="note">이미지가 없는 제품은 임시로 직접 그린 일러스트를 보여 줍니다. 용량·도수는 2026-11-27 조사한 참고값이며 제조사 공식 값이 아닌 항목이 많으니 라벨을 확인해 수정해 주세요.</div></section>
         <div class="disc">${esc(GUIDE.DISCLAIMER)}</div>`;
     }
 
-    return { nav, cal, rec, amount, amountLive, day, warn, custom, stats: statsView, report, settings };
+    return { photoView, nav, cal, rec, amount, amountLive, day, warn, custom, stats: statsView, report, settings };
   }
   DB.createViews = createViews;
 })(typeof window !== 'undefined' ? window : globalThis);

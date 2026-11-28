@@ -12,8 +12,8 @@ const PORT = +process.env.PORT || 3000;
 const HOST = process.env.HOST || '127.0.0.1';
 const MAX_BODY = 10 * 1024 * 1024;
 // 화면에 필요한 것만 공개 (허용 목록). server/, tests/, research/, package.json 등은 공개하지 않음
-const PUBLIC_TOP = new Set(['index.html', 'css', 'js', 'images', 'assets']);
-const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.ico': 'image/x-icon', '.md': 'text/plain; charset=utf-8' };
+const PUBLIC_TOP = new Set(['index.html', 'manifest.webmanifest', 'sw.js', 'css', 'js', 'images', 'assets']);
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.ico': 'image/x-icon', '.webmanifest': 'application/manifest+json; charset=utf-8', '.md': 'text/plain; charset=utf-8' };
 
 /* ---------- 저장소 (파일) ---------- */
 function readDb() { try { return fs.readFileSync(DB_FILE, 'utf8'); } catch (e) { return null; } }

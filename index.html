@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f1f7f3">
+<meta name="theme-color" content="#f3fcf3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="images/icon-192.png">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Drink Balance">
 <title>Drink Balance</title>
 <!-- 디자인: css/tokens.css(색·값) → css/style.css(컴포넌트) → css/responsive.css(PC/태블릿). 이 3개와 images/ 만 바꿔도 기능은 그대로 -->
 <link rel="stylesheet" href="css/tokens.css">
@@ -33,6 +38,7 @@
 <!-- 저장(api): 브라우저 또는 로컬 서버 -->
 <script src="js/api/local.js"></script>
 <script src="js/api/remote.js"></script>
+<script src="js/api/photos.js"></script>
 <script src="js/api/index.js"></script>
 <!-- 이미지: 연결 정보는 images/ 폴더에서 관리 -->
 <script src="images/manifest.js"></script>
@@ -42,5 +48,7 @@
 <!-- 화면(ui) -->
 <script src="js/ui/views.js"></script>
 <script src="js/ui/app.js"></script>
+<!-- 홈 화면 설치·오프라인 (http/https 에서만 동작, 파일로 열면 건너뜀) -->
+<script>if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){navigator.serviceWorker.register("sw.js").catch(function(){});}</script>
 </body>
 </html>
