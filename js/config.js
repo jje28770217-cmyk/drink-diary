@@ -8,5 +8,5 @@
      url = 프로젝트 주소(https://xxxx.supabase.co), key = publishable(anon) 키. 이 두 값은 공개되어도 됩니다.
      ※ secret/service_role 키와 데이터베이스 비밀번호는 절대 넣지 마세요. 비어 있으면 클라우드 기능은 꺼집니다. */
 (function (root) {
-  (root.DB = root.DB || {}).config = { storage: 'auto', apiBase: '/api', supabase: { url: '', key: '' } };
+  (root.DB = root.DB || {}).config = { storage: 'auto', apiBase: '/api', supabase: { url: 'https://kszkwerdltmoimdbivnx.supabase.co', key: 'sb_publishable_chv_fpNmUbGi1zOXDXKOtQ_UA6zp-39' } };
 })(typeof window !== 'undefined' ? window : globalThis);

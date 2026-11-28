@@ -82,7 +82,9 @@
     async function uploadPhoto(id, blob) { await call('/storage/v1/object/photos/' + session.user.id + '/' + id + '.jpg', { method: 'POST', headers: { 'Content-Type': 'image/jpeg', 'x-upsert': 'true' }, body: blob }); }
     async function downloadPhoto(ownerId, id) {
       await ensureToken();
-      const res = await raw('/storage/v1/object/authenticated/photos/' + ownerId + '/' + id + '.jpg');
+      // 주소에 매번 다른 값을 붙여 CDN 캐시를 피함: 안 그러면 친구를 끊은 뒤에도 이전에 본 사진이 계속 내려받아짐(실제 Supabase에서 확인)
+      const bust = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      const res = await raw('/storage/v1/object/authenticated/photos/' + ownerId + '/' + id + '.jpg?cb=' + bust);
       if (res.status === 404 || res.status === 400) return null;
       return (await check(res)).blob();
     }

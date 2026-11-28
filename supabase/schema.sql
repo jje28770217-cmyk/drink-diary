@@ -88,6 +88,12 @@ revoke insert on public.friendships from authenticated, anon;
 revoke update on public.friendships from authenticated, anon;
 grant update (status) on public.friendships to authenticated;
 
+-- 테이블 권한을 직접 부여 (프로젝트 만들 때 "새 테이블에 API 액세스 권한 자동 부여"를 꺼 두어도 동작하도록).
+-- 실제로 무엇이 보이는지는 위의 RLS 정책이 다시 한 번 제한합니다.
+grant select on public.profiles to authenticated;
+grant select, insert, update, delete on public.user_data to authenticated;
+grant select, delete on public.friendships to authenticated;
+
 -- anon(로그인 전) 은 어떤 테이블도 접근 불가
 revoke all on public.profiles, public.user_data, public.friendships from anon;
 
