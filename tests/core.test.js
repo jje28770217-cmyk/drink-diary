@@ -214,3 +214,24 @@ test('사진: 기록에 id 로 붙이고(개수 제한 없음) 지우면 빈 날
   s.toggleSober('2026-11-11'); s.addPhoto('2026-11-11', 'x'); s.toggleSober('2026-11-11');
   assert.deepEqual(s.photosOf('2026-11-11'), ['x']); // 사진이 있으면 금주 취소해도 날이 남음
 });
+
+test('주간 목표 진행·금주 배지', async () => {
+  const { store: s } = await newStore();
+  assert.deepEqual(stats.goalProgress(s, '2026-11-25'), []);              // 목표 없으면 비어 있음
+  s.setGoals({ weekDays: '2', weekG: 100 });
+  assert.deepEqual(s.goals, { weekDays: 2, weekG: 100 });
+  s.setGoals({ weekDays: -3 }); assert.equal(s.goals.weekDays, null);     // 음수는 목표 없음
+  s.setGoals({ weekDays: 99 }); assert.equal(s.goals.weekDays, 7);       // 주 7일 상한
+  s.setGoals({ weekDays: 2 });
+  // 2026-11-25(수) 기준 이번 주: 11-22(일)~11-28. 11-23, 11-24에 각 소주 반병(약 22g), 11-27은 미래라 집계 제외
+  drink(s, '2026-11-23', 'chamisul-fresh', 0, 0.5); drink(s, '2026-11-24', 'chamisul-fresh', 0, 0.5); drink(s, '2026-11-27', 'chamisul-fresh', 0, 0.5);
+  const p = stats.goalProgress(s, '2026-11-25'), d = p.find(x => x.key === 'days'), g = p.find(x => x.key === 'g');
+  assert.equal(d.cur, 2); assert.equal(d.met, true); assert.equal(d.over, false); assert.equal(d.pct, 100);
+  assert.ok(g.cur > 40 && g.cur < 48 && g.pct < 50 && !g.over, JSON.stringify(g));
+  drink(s, '2026-11-25', 'chamisul-fresh', 0, 0.5);
+  assert.equal(stats.goalProgress(s, '2026-11-25').find(x => x.key === 'days').over, true);
+  // 배지: 11-10~11-16 7일 연속 금주 기록 → 3·7일 배지
+  for (let i = 10; i <= 16; i++) s.toggleSober('2026-11-' + i);
+  const b = stats.badges(s, '2026-11-25');
+  assert.equal(stats.longestSober(s), 7); assert.deepEqual(b.earned, [3, 7]); assert.equal(b.cur, 0); assert.equal(b.next, 3);
+});

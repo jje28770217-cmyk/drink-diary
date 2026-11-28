@@ -59,6 +59,31 @@
     return { cur, prev, pct: changePct(cur, prev), sober };
   }
 
-  const api = { periodRange, daysIn, summarize, weeklySeries, changePct, soberStreak, weekCompare };
+  /** 금주 배지 기준(연속 금주일). 앱 자체 규칙 */
+  const BADGES = [3, 7, 14, 30];
+  /** 지금까지 가장 길었던 연속 금주(금주로 기록한 날, 음주 기록이 없는 날) 일수 */
+  function longestSober(store) {
+    const ds = Object.keys(store.raw().days).filter(d => store.dayOf(d).sober && !store.entriesOf(d).length).sort();
+    let best = 0, run = 0, prev = null;
+    ds.forEach(d => { run = prev && calc.addDays(prev, 1) === d ? run + 1 : 1; if (run > best) best = run; prev = d; });
+    return best;
+  }
+  /** 이번 주(일~토) 목표 진행. 설정한 목표만 돌려줌: [{key,label,cur,max,unit,pct,over,met}] */
+  function goalProgress(store, today) {
+    today = today || calc.todayS();
+    const g = store.goals, days = daysIn(periodRange('week', 0, today)).filter(d => d <= today), drink = days.filter(d => store.entriesOf(d).length);
+    const total = drink.reduce((a, d) => a + store.gOf(d), 0), out = [];
+    const item = (key, label, cur, max, unit) => ({ key, label, cur, max, unit, pct: max > 0 ? Math.min(100, Math.round(cur / max * 100)) : (cur > 0 ? 100 : 0), over: cur > max, met: cur === max });
+    if (g.weekDays != null) out.push(item('days', '이번 주 음주일', drink.length, g.weekDays, '일'));
+    if (g.weekG != null) out.push(item('g', '이번 주 순수 알코올', calc.r1(total), g.weekG, 'g'));
+    return out;
+  }
+  /** 금주 배지: 현재 연속, 최장 연속, 얻은 배지, 다음 배지까지 남은 일수 */
+  function badges(store, today) {
+    const cur = soberStreak(store, today), best = longestSober(store), earned = BADGES.filter(b => b <= Math.max(cur, best)), next = BADGES.find(b => b > cur);
+    return { cur, best, earned, next: next || null, left: next ? next - cur : 0 };
+  }
+
+  const api = { periodRange, daysIn, summarize, weeklySeries, changePct, soberStreak, weekCompare, BADGES, longestSober, goalProgress, badges };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else (root.DB = root.DB || {}).stats = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -123,7 +123,8 @@
       case 'sex': store.setProfile({ sex: v }); render(); break;
       case 'resetOv': if (root.confirm('수정한 제품 값을 모두 기본값으로 되돌릴까요?')) { store.resetOverrides(); toast('초기화했어요'); } break;
       case 'delCustom': if (root.confirm('이 제품을 삭제할까요? (과거 기록은 유지됩니다)')) { store.deleteCustom(v); render(); } break;
-      case 'export': { const b = new Blob([store.exportJSON()], { type: 'application/json' }), a = doc.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'drink-balance-backup-' + calc.todayS() + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); break; }
+      case 'export': { const b = new Blob([store.exportJSON()], { type: 'application/json' }), a = doc.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'drink-balance-backup-' + calc.todayS() + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); lsSet('drinkBalance.lastBackup', calc.todayS()); render(); break; }
+      case 'snoozeBackup': lsSet('drinkBalance.backupSnooze', calc.todayS()); render(); toast('3일 뒤에 다시 알려 드릴게요'); break;
       case 'wipe': if (root.confirm('모든 기록을 삭제할까요? 되돌릴 수 없습니다.') && root.confirm('정말 전체 삭제할까요?')) { { const ids = []; Object.keys(store.raw().days).forEach(d => (store.raw().days[d].photos || []).forEach(i => ids.push(i))); if (cloud.loggedIn) ids.forEach(i => cloud.deletePhoto(i).catch(() => { })); } store.wipe(); DB.photos.clear().catch(() => { }); render(); toast('전체 삭제했어요'); } break;
     }
   });
@@ -139,6 +140,8 @@
     else if (t.id === 'mlIn') { draft.setUnitMl(num(t.value)); t.classList.toggle('need', !draft.unitMl); updateLive(); }
     else if (t.id === 'qtyIn') { const q = num(t.value); if (q > 0) { draft.customQty(q); updateLive(); } }
     else if (t.id === 'saveDef') draft.saveDef = t.checked;
+    else if (t.id === 'goalDays') store.setGoals({ weekDays: t.value });
+    else if (t.id === 'goalG') store.setGoals({ weekG: t.value });
     else if (t.id === 'ageIn') store.setProfile({ age: t.value });
     else if (t.id === 'pregIn') store.setProfile({ pregnant: t.checked });
     else if (t.dataset.f) store.setDayField($('#sheet').dataset.date, t.dataset.f, t.value);
@@ -156,6 +159,19 @@
   // 탭을 닫거나 숨길 때 저장이 끝나도록
   doc.addEventListener('visibilitychange', () => { if (doc.visibilityState === 'hidden' && store) store.flush(); });
   root.addEventListener('pagehide', () => { if (store) store.flush(); });
+
+  /* ---------- 백업 알림 ---------- */
+  const lsGet = k => { try { return root.localStorage.getItem(k); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { root.localStorage.setItem(k, v); } catch (e) { /* 저장 불가 */ } };
+  const daysSince = d => d ? Math.round((calc.parse(calc.todayS()) - calc.parse(d)) / 86400000) : null;
+  /** 클라우드에 저장 중이면 알리지 않음. 기록이 있고 마지막 백업이 7일을 넘었으면(또는 한 번도 없으면) 알림. '나중에'는 3일간 숨김 */
+  function backupInfo() {
+    if (storageInfo.mode === 'cloud' || !store) return { due: false, days: null };
+    const has = Object.keys(store.raw().days).length > 0; if (!has) return { due: false, days: null };
+    const last = lsGet('drinkBalance.lastBackup'), days = daysSince(last), snooze = daysSince(lsGet('drinkBalance.backupSnooze'));
+    if (snooze != null && snooze < 3) return { due: false, days };
+    return { due: last == null ? Object.keys(store.raw().days).length >= 3 : days >= 7, days };
+  }
 
   /* ---------- 계정·친구 (클라우드) ---------- */
   const cloudErr = e => (e && e.message) ? e.message : String(e);
@@ -192,7 +208,7 @@
       store = make(sel.adapter); await store.load();
     }
     storageInfo = sel;
-    views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo, cloud });
+    views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo, cloud, backupInfo });
     render();
     if (sel.note) toast(sel.note);
     DB.app = { store, S, render, openAmount, openDay, addPhotos, cloud };   // 디버깅·테스트용

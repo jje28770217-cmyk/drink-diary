@@ -93,8 +93,24 @@
         <section class="card cal-card"><div class="wk">${calc.WD.map(w => `<span>${w}</span>`).join('')}</div><div class="grid">${cells}</div>
           <div class="legend"><span><i class="dot ok"></i>기준 이내</span><span><i class="dot warn"></i>경고</span><span class="lg-chk">${I.check}금주</span><span>미기록은 빈칸</span></div></section>
         ${S.sel ? dayCard(S.sel) : ''}
+        ${backupBanner()}
+        ${goalCard()}
         ${weekCard()}
         <div class="disc">${esc(GUIDE.DISCLAIMER)}</div>`;
+    }
+    /** 이번 주 목표 진행 + 금주 배지 (목표를 정하지 않아도 배지는 보임) */
+    function goalCard() {
+      const items = stats.goalProgress(store), bd = stats.badges(store), has = items.length || bd.cur || bd.best;
+      if (!has) return `<section class="card goal-card"><div class="sp"><h4>목표·챌린지</h4><p class="sub">주간 목표를 정하면 진행 상황과 금주 배지를 여기서 볼 수 있어요.</p></div><button class="btn soft sm" data-act="tab" data-v="set">목표 정하기</button></section>`;
+      const bar = it => { const left = it.max - it.cur; return `<div class="goal ${it.over ? 'bad' : it.met ? 'met' : ''}"><div class="gauge-top"><span>${it.label}</span><b>${it.cur}${it.unit} / ${it.max}${it.unit}</b></div><div class="bar"><i style="width:${it.pct}%"></i></div><small>${it.over ? '목표를 넘었어요. 남은 날은 쉬어 가요' : it.met ? '목표에 도달했어요. 이번 주는 여기까지!' : `목표까지 ${r1(left)}${it.unit} 남았어요`}</small></div>`; };
+      return `<section class="card goal-card col"><h4>목표·챌린지</h4>${items.map(bar).join('')}
+        <div class="badges">${bd.cur ? `<span class="pill mint sm">금주 ${bd.cur}일째</span>` : ''}${stats.BADGES.map(b => `<span class="badge ${bd.earned.includes(b) ? 'on' : ''}" title="${b}일 연속 금주">${bd.earned.includes(b) ? '🏅' : '○'} ${b}일</span>`).join('')}</div>
+        ${bd.next && bd.cur ? `<small class="sub">다음 배지(${bd.next}일)까지 ${bd.left}일 남았어요</small>` : ''}</section>`;
+    }
+    /** 백업 알림: 이 기기·내 PC에만 저장 중이고 기록이 있으며 일주일 넘게 백업하지 않았을 때 */
+    function backupBanner() {
+      const b = ctx.backupInfo(); if (!b.due) return '';
+      return `<section class="card backup-card"><div class="sp"><b>백업한 지 ${b.days == null ? '오래' : b.days + '일'} 됐어요</b><small>기록이 이 기기에만 있어요. 백업 파일을 내려받아 두면 안전해요.</small></div><button class="btn sm" data-act="export">백업 내보내기</button><button class="btn ghost sm" data-act="snoozeBackup">나중에</button></section>`;
     }
     function weekCard() {
       const w = stats.weekCompare(store), has = w.cur > 0 || w.prev > 0 || w.sober > 0;
@@ -324,6 +340,9 @@
           <div class="field"><span>성별</span><div class="chips">${[['unset', '선택 안 함'], ['female', '여성'], ['male', '남성']].map(([k, n]) => `<button class="chip ${pf.sex === k ? 'on' : ''}" data-act="sex" data-v="${k}">${n}</button>`).join('')}</div></div>
           <label class="field"><span>나이 (선택)</span><input id="ageIn" inputmode="numeric" value="${esc(pf.age)}" placeholder="예: 34"></label>
           <label class="chk"><input type="checkbox" id="pregIn" ${pf.pregnant ? 'checked' : ''}> 임신 중이거나 임신을 계획 중입니다</label></section>
+        <section class="card"><h3 class="card-h">주간 목표 <small>비워 두면 목표 없음</small></h3><div class="note">이번 주(일~토) 기준으로 캘린더에 진행 막대가 나와요. 숫자는 내가 정하는 값이에요.</div>
+          <div class="two"><label class="field"><span>음주일 (일/주, 0~7)</span><input id="goalDays" inputmode="numeric" value="${store.goals.weekDays == null ? '' : store.goals.weekDays}" placeholder="예: 2"></label>
+          <label class="field"><span>순수 알코올 (g/주)</span><input id="goalG" inputmode="numeric" value="${store.goals.weekG == null ? '' : store.goals.weekG}" placeholder="예: 100"></label></div></section>
         <section class="card"><h3 class="card-h">제품 값 초기화</h3><div class="note">기록할 때 수정해서 저장한 도수·용량을 모두 기본값으로 되돌립니다. (과거 기록은 바뀌지 않습니다.)</div><button class="btn ghost" data-act="resetOv">수정한 제품 값 초기화</button></section>
         <section class="card"><h3 class="card-h">직접 추가한 제품 (${store.custom.length})</h3>${store.custom.map(c => `<div class="ent"><div class="t"><b>${esc(c.name)}</b><span>${esc(CAT_NAME[c.cat] || '')} · ${c.abv}%</span></div><button class="btn danger sm" data-act="delCustom" data-v="${c.id}">삭제</button></div>`).join('') || '<div class="note">없음</div>'}</section>
         <section class="card"><h3 class="card-h">데이터</h3><div class="note">저장 위치: <b>${info.mode === 'cloud' ? '내 계정(클라우드)' : info.mode === 'remote' ? '내 PC의 서버 (server/data/db.json)' : '이 브라우저(localStorage)'}</b>.${info.mode === 'cloud' ? '' : ' 외부로 전송되지 않습니다.'} 다른 곳으로 옮기려면 백업 파일을 사용하세요. <b>사진은 백업 파일에 들어가지 않습니다</b>(${info.mode === 'cloud' ? '계정에 따로 보관돼요' : '이 브라우저에만 있어서 브라우저 데이터를 지우면 사라져요'}).</div>

@@ -6,11 +6,11 @@
 
   const ICON_BASE = { 'johnnie-walker-red': 'johnnie-walker' };
 
-  function blank() { return { v: 1, days: {}, fav: [], recent: [], overrides: {}, custom: [], profile: { sex: 'unset', age: '', pregnant: false } }; }
+  function blank() { return { v: 1, days: {}, fav: [], recent: [], overrides: {}, custom: [], profile: { sex: 'unset', age: '', pregnant: false }, goals: { weekDays: null, weekG: null } }; }
   function normalize(s) {
     const b = blank();
     if (!s || typeof s !== 'object' || typeof s.days !== 'object') return b;
-    return Object.assign(b, s, { profile: Object.assign(b.profile, s.profile || {}) });
+    return Object.assign(b, s, { profile: Object.assign(b.profile, s.profile || {}), goals: Object.assign(b.goals, s.goals || {}) });
   }
 
   /**
@@ -115,6 +115,11 @@
     function deleteCustom(id) { state.custom = state.custom.filter(c => c.id !== id); persist(); }
     function resetOverrides() { state.overrides = {}; persist(); }
     function setProfile(patch) { Object.assign(state.profile, patch); persist(); }
+    /** 목표: weekDays(주 음주일 한도), weekG(주 순수 알코올 한도 g). null 이면 목표 없음. 음수·숫자 아님은 null */
+    function setGoals(patch) {
+      Object.keys(patch).forEach(k => { if (k !== 'weekDays' && k !== 'weekG') return; const n = patch[k] === '' || patch[k] == null ? null : Number(patch[k]); state.goals[k] = Number.isFinite(n) && n >= 0 ? (k === 'weekDays' ? Math.min(7, Math.round(n)) : Math.round(n)) : null; });
+      persist();
+    }
 
     /* ---------- 데이터 관리 ---------- */
     const exportJSON = () => JSON.stringify(state);
@@ -122,8 +127,8 @@
     function wipe() { state = blank(); persist(); }
 
     return { load, flush, raw, allProducts, getProduct, effAbv, effMl, imageId, thumbId, dayOf, entriesOf, gOf, weekSum, streak, isRecorded, analyze, dayStatus, photosOf, addPhoto, removePhoto,
-      saveEntry, deleteEntry, toggleSober, setDayField, toggleSymptom, toggleFav, touchRecent, saveOverride, addCustom, deleteCustom, resetOverrides, setProfile, exportJSON, importData, wipe,
-      get profile() { return state.profile; }, get fav() { return state.fav; }, get recent() { return state.recent; }, get custom() { return state.custom; } };
+      saveEntry, deleteEntry, toggleSober, setDayField, toggleSymptom, toggleFav, touchRecent, saveOverride, addCustom, deleteCustom, resetOverrides, setProfile, setGoals, exportJSON, importData, wipe,
+      get profile() { return state.profile; }, get goals() { return state.goals; }, get fav() { return state.fav; }, get recent() { return state.recent; }, get custom() { return state.custom; } };
   }
 
   const api = { createStore, blank, normalize };

@@ -259,3 +259,13 @@ i.dot.warn{background:var(--red)}
 .fcode-row{display:flex;align-items:center;gap:10px}.fcode{font-size:22px;letter-spacing:2px;color:var(--lav-deep)}
 .grow{flex:1;min-width:0}
 .fday{padding:14px}.fent{padding:4px 0;font-size:14px}.fmemo{margin-top:6px;padding:8px 10px;background:var(--lav-soft);border-radius:12px;font-size:13.5px}
+
+/* 목표·챌린지, 백업 알림 */
+.goal-card{display:flex;align-items:center;gap:12px}.goal-card.col{flex-direction:column;align-items:stretch}
+.goal-card h4{font-size:15px;margin-bottom:2px}.goal{margin:8px 0}
+.goal .gauge-top{display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:4px}
+.goal .bar{height:10px;border-radius:999px;background:var(--tile);overflow:hidden}.goal .bar i{display:block;height:100%;background:var(--green);border-radius:999px}
+.goal.met .bar i{background:var(--lav-deep)}.goal.bad .bar i{background:var(--red)}.goal.bad small{color:var(--red);font-weight:700}
+.goal small{display:block;margin-top:4px;font-size:12.5px;color:var(--sub)}
+.badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.badge{font-size:12.5px;padding:4px 10px;border-radius:999px;background:var(--tile);color:var(--sub)}.badge.on{background:var(--lav-mid);color:var(--lav-deep);font-weight:800}
+.backup-card{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--amber-soft)}.backup-card small{display:block;color:var(--sub);font-size:12px;margin-top:2px}
