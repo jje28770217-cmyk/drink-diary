@@ -10,7 +10,7 @@
 
   // ===== 소주 =====
   add('chamisul-fresh', '참이슬 후레쉬', 'soju', { units: [B(360)], abv: 15.7, st: 'ref', src: 'https://biz.sbs.co.kr/amp/article/20000314098', note: '뉴스 보도 기준입니다. 라벨의 도수를 확인해 주세요.' });
-  add('chamisul-original', '참이슬 오리지널', 'soju', { units: [B(360)], abv: null, st: 'none', note: '도수 자료가 서로 달라 확인하지 못했습니다. 라벨을 보고 직접 입력해 주세요.' });
+  add('chamisul-original', '참이슬 오리지널', 'soju', { sub: '빨간 뚜껑', units: [B(360)], abv: 20.1, st: 'ref', note: '사용자가 알려 준 값(빨간 뚜껑 20.1도)입니다. 제조사 공식 자료로는 확인하지 못했으니 라벨과 다르면 수정해 주세요.' });
   add('chumchurum', '처음처럼', 'soju', { units: [B(360)], abv: 16, st: 'ref', src: 'https://www.hankyung.com/amp/2026061076991', note: '16도 보도 기준입니다. 도수가 바뀌었다는 보도가 있어 라벨 확인이 필요합니다.' });
   add('jinro', '진로', 'soju', { units: [B(360)], abv: 15.7, st: 'ref', src: 'https://magazine.hankyung.com/business/article/202602121449b', note: '뉴스 보도 기준입니다.' });
   add('saero', '새로', 'soju', { units: [B(360)], abv: 15.7, st: 'ref', src: 'https://news.bizwatch.co.kr/article/consumer/2026/01/22/0020', note: '뉴스 보도 기준입니다.' });
@@ -28,7 +28,9 @@
 
   // ===== 맥주 =====
   add('cass', '카스 프레시', 'beer', { units: [C(355), C(500), B(null)], abv: 4.5, st: 'ref', src: 'https://www.ddaily.co.kr/page/view/2025070410155807358', note: '뉴스 보도 기준입니다. 병 용량은 확인하지 못했습니다.' });
+  add('cass-light', '카스 라이트', 'beer', { units: [C(355), C(500), B(330)], abv: 4, st: 'ref', src: 'https://wiki.onul.works/w/%EC%B9%B4%EC%8A%A4_(%EB%A7%A5%EC%A3%BC)', note: '도수·용량은 커뮤니티 위키 기준이며 오비맥주 공식 자료로는 확인하지 못했습니다. 라벨을 확인해 주세요.' });
   add('terra', '테라', 'beer', { units: [C(355), C(500), B(null)], abv: 4.6, st: 'ref', src: 'https://biz.newdaily.co.kr/site/data/html/2022/03/25/2022032500', note: '2022년 보도 기준이라 현행 규격 확인이 필요합니다.' });
+  add('terra-light', '테라 라이트', 'beer', { units: [C(355), C(500), B(500)], abv: 4, st: 'ref', src: 'https://view.asiae.co.kr/en/article/2024061808363355978', note: '2024년 출시 보도 기준입니다. 이후 다른 용량의 캔(490mL 등)이 나왔다는 보도가 있어, 용량은 라벨을 보고 직접 입력해 주세요.' });
   add('kelly', '켈리', 'beer', { units: [C(null), B(null)], abv: 4.5, st: 'ref', src: 'https://www.etoday.co.kr/news/view/2235658', note: '도수는 보도 기준이며 용량은 확인하지 못했습니다. 직접 입력해 주세요.' });
   add('hanmac', '한맥', 'beer', { units: [C(330), B(null)], abv: 4.6, st: 'ref', src: 'https://www.taxtimes.co.kr/news/article.html?no=275631', note: '뉴스 보도 기준입니다.' });
   add('cloud', '클라우드', 'beer', { units: [C(null), B(null)], abv: 5, st: 'ref', src: 'https://www.ddaily.co.kr/page/view/2026052020412693287', note: '2026년 5월 리뉴얼 기사 기준 도수이며 용량은 확인하지 못했습니다.' });
@@ -74,6 +76,7 @@
   add('sake', '사케', 'etc', { units: [B(720), G(null)], abv: null, st: 'none', note: '720mL는 일반 규격(2차 출처)입니다. 도수는 라벨을 보고 입력해 주세요.' });
   add('kaoliang', '고량주', 'etc', { units: [B(500), B(250), G(null)], abv: null, note: '용량은 판매처 표기 기준입니다. 도수는 제품마다 달라 직접 입력해 주세요.' });
   add('cocktail', '칵테일', 'etc', { units: [G(null)], abv: null, note: '칵테일은 종류마다 다릅니다. 한 잔 용량과 도수를 직접 입력해 주세요.' });
+  add('bokbunja', '복분자주', 'etc', { sub: '과실주', units: [B(null)], abv: null, st: 'none', note: '시판 제품이 대체로 13~16도, 360·375mL 병으로 보이지만(쇼핑몰 표기 기준) 제품마다 달라 정해진 값을 넣지 않았습니다. 라벨을 보고 직접 입력해 주세요.' });
   add('vodka', '보드카', 'etc', { units: [B(750), G(null)], abv: null, note: '750mL는 일반 표준 규격입니다. 도수는 라벨을 보고 입력해 주세요.' });
   add('tequila', '데킬라', 'etc', { units: [B(750), G(null)], abv: null, note: '750mL는 일반 표준 규격입니다. 도수는 라벨을 보고 입력해 주세요.' });
   add('rum', '럼', 'etc', { units: [B(750), G(null)], abv: null, note: '750mL는 일반 표준 규격입니다. 도수는 라벨을 보고 입력해 주세요.' });

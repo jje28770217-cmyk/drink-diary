@@ -24,9 +24,39 @@
   --amber-soft:#fff3df;
   --shadow:0 4px 18px rgba(18,82,56,.08);
   --r:24px;
+  /* 테마에 따라 달라지는 보조 값 (다크 모드에서 같은 이름으로 덮어씀) */
+  --on-btn:#ffffff;        /* 진한 버튼·선택 칩 위의 글자 */
+  --red-solid:#ba1a1a;     /* 빨강 "면" (경고 박스 등, 위 글자는 항상 흰색) */
+  --amber-solid:#875500; --rh-num:#ba1a1a;   /* 경고 박스 안 큰 숫자 */
+  --ink-soft:#3b463f;      /* 본문 보조 글자 */
+  --hero-a:#e1f5e8; --sum-a:#dff3e6;   /* 카드 안 은은한 그라데이션 시작색 */
+  --glass:rgba(255,255,255,.85); --glass-soft:rgba(255,255,255,.72);
+  --nav-bg:rgba(243,252,243,.94); --overlay:rgba(21,29,25,.42);
+  --star-off:#b3beb6; --star-on:#f0b429;
+  --btn-glow:rgba(18,82,56,.3); --bar-track:rgba(18,82,56,.12);
+  color-scheme:light;
   --font:"Pretendard","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
   /* 차트(ui/views.js 가 읽음) */
   --chart-bar:#b1f0cd; --chart-bar-now:#125238; --chart-warn:#ffb95d; --chart-line:#2f6b4f; --chart-text:#5a645d;
   /* 주종별 색(도넛 차트) */
   --cat-soju:#125238; --cat-beer:#96d4b2; --cat-makgeolli:#d9cfa8; --cat-wine:#c0486f; --cat-whisky:#ffb95d; --cat-highball:#8fb6f0; --cat-etc:#c0c9c1; --cat-custom:#a0a0b8;
+}
+
+/* ───── 다크 모드 ─────
+   <html data-theme="dark"> 일 때 적용. index.html 맨 위 스크립트와 설정 화면의 "화면 테마"가 이 값을 정합니다(시스템/라이트/다크).
+   위 :root 와 같은 이름의 변수만 다시 정의하므로, 색을 바꿀 때는 라이트·다크 두 곳을 함께 보세요. */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0e1511; --bg-grad:#0e1511; --card:#18211c; --ink:#e8efe9; --sub:#9aa89e; --line:#2a352e;
+  --lav:#3a6b52; --lav-soft:#1d2923; --lav-mid:#26443a; --lav-deep:#8fe0b5; --btn:#8fe0b5; --tile:#222e27;
+  --green:#6fcf9c; --red:#ff7b72; --red-soft:#3a1f1d; --amber:#ffb95d; --amber-soft:#33281a;
+  --shadow:0 4px 18px rgba(0,0,0,.45);
+  --on-btn:#0b1a12; --red-solid:#c62828; --amber-solid:#875500; --rh-num:#ffffff; --ink-soft:#b9c6bd;
+  --hero-a:#22372c; --sum-a:#20362b;
+  --glass:rgba(24,33,28,.88); --glass-soft:rgba(255,255,255,.07);
+  --nav-bg:rgba(14,21,17,.94); --overlay:rgba(0,0,0,.6);
+  --star-off:#55635a; --star-on:#f0b429;
+  --btn-glow:rgba(0,0,0,.5); --bar-track:rgba(255,255,255,.14);
+  --chart-bar:#2c5a43; --chart-bar-now:#8fe0b5; --chart-warn:#ffb95d; --chart-line:#8fe0b5; --chart-text:#9aa89e;
+  --cat-soju:#8fe0b5; --cat-beer:#4f9c78; --cat-makgeolli:#d9cfa8; --cat-wine:#e0709a; --cat-whisky:#ffb95d; --cat-highball:#8fb6f0; --cat-etc:#6b776f; --cat-custom:#a0a0b8;
 }

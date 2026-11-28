@@ -23,10 +23,13 @@
     }
     function preset(f) { d.qty = f; d.customMode = false; }
     function customQty(q) { d.customMode = true; if (q != null && q > 0) d.qty = q; }
+    /** + / − : mL 는 50씩, 병·캔·잔은 1씩(1 → 2 → 3). 분수·소수는 "직접 입력"에서만. 1 아래로는 줄이지 않음 */
     function step(delta) {
-      const ml = curUnit().t === 'ml', min = ml ? 10 : 0.25;
-      d.qty = Math.max(min, Math.round((d.qty + delta) * 100) / 100);
-      d.customMode = ml ? true : !calc.isPreset(d.qty);
+      if (curUnit().t === 'ml') { d.qty = Math.max(10, Math.round((d.qty + delta) * 100) / 100); d.customMode = true; return; }
+      const q = d.qty;
+      if (delta > 0) d.qty = Math.floor(q + 1e-9) + 1;
+      else if (q > 1 + 1e-9) d.qty = Math.max(1, Math.ceil(q - 1e-9) - 1);
+      d.customMode = !calc.isPreset(d.qty);
     }
     const setAbv = v => { d.abv = (v === '' || v == null || isNaN(v)) ? null : +v; };
     const setUnitMl = v => { d.unitMl = +v || 0; };

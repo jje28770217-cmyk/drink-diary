@@ -169,7 +169,8 @@ test('저장·불러오기·가져오기·초기화', async () => {
 test('제품 DB: 도수·용량 미확인 값은 비어 있고, 모든 제품에 이미지 id 가 있다', () => {
   const ids = new Set(PRODUCTS.map(p => p.id)); assert.equal(ids.size, PRODUCTS.length, '제품 id 중복');
   PRODUCTS.forEach(p => { assert.ok(p.units.length, p.id); if (p.st === 'none') assert.ok(p.abv == null || p.note, p.id + ' 미확인 제품에 값이 있음'); });
-  assert.equal(PRODUCTS.find(p => p.id === 'chamisul-original').abv, null);
+  const orig = PRODUCTS.find(p => p.id === 'chamisul-original'); assert.equal(orig.abv, 20.1); assert.equal(orig.st, 'ref'); // 사용자가 알려 준 값(빨간 뚜껑 20.1도)
+  const bok = PRODUCTS.find(p => p.id === 'bokbunja'); assert.equal(bok.abv, null); assert.ok(bok.note); // 제품마다 달라 비워 둠
 });
 
 test('캘린더 날짜 상태(dayStatus)·연속 금주·최근 7일 비교', async () => {
@@ -234,4 +235,27 @@ test('주간 목표 진행·금주 배지', async () => {
   for (let i = 10; i <= 16; i++) s.toggleSober('2026-11-' + i);
   const b = stats.badges(s, '2026-11-25');
   assert.equal(stats.longestSober(s), 7); assert.deepEqual(b.earned, [3, 7]); assert.equal(b.cur, 0); assert.equal(b.next, 3);
+});
+
+test('카스 라이트·테라 라이트: 병·캔 단위, 참고값 표시, 이미지 id 연결', () => {
+  for (const [id, bottleMl] of [['cass-light', 330], ['terra-light', 500]]) {
+    const p = PRODUCTS.find(x => x.id === id); assert.ok(p, id + ' 없음');
+    assert.equal(p.cat, 'beer'); assert.equal(p.abv, 4); assert.equal(p.st, 'ref'); assert.ok(p.src && p.note);
+    assert.ok(p.units.some(u => u.t === 'can') && p.units.some(u => u.t === 'bottle' && u.ml === bottleMl), id + ' 단위');
+  }
+  const ids = require('../js/ui/icons-svg.js').ICON_IDS;
+  for (const id of ['cass-light', 'cass-light-bottle', 'cass-light-glass', 'terra-light', 'terra-light-bottle', 'terra-light-glass']) assert.ok(ids.includes(id), id + ' 그림');
+});
+
+test('분량 선택: 버튼은 ½·1·2, +/− 는 1씩(분수는 직접 입력에서만)', async () => {
+  const { store } = await newStore();
+  assert.deepEqual(calc.FRACS, [0.5, 1, 2]);
+  const dr = createDraft(store, 'chamisul-fresh', { date: '2026-11-20' });
+  assert.equal(dr.qty, 1);
+  dr.step(1); assert.equal(dr.qty, 2); dr.step(1); assert.equal(dr.qty, 3); assert.equal(dr.customMode, false); // 3병도 일반 상태
+  dr.step(-1); assert.equal(dr.qty, 2); dr.step(-1); assert.equal(dr.qty, 1); dr.step(-1); assert.equal(dr.qty, 1); // 1 아래로는 내려가지 않음
+  dr.preset(0.5); dr.step(1); assert.equal(dr.qty, 1); // ½ 에서 + 는 1
+  dr.customQty(1.5); assert.equal(dr.customMode, true); dr.step(1); assert.equal(dr.qty, 2); dr.customQty(2.5); dr.step(-1); assert.equal(dr.qty, 2); // 소수는 정수로 정리
+  dr.customQty(0.25); assert.equal(dr.qty, 0.25); // 직접 입력은 분수도 가능
+  assert.equal(calc.isPreset(0.5) && calc.isPreset(1) && calc.isPreset(3), true); assert.equal(calc.isPreset(0.75) || calc.isPreset(1.5), false);
 });

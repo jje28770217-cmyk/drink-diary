@@ -10,7 +10,7 @@
   const niceDate = s => { const d = parse(s); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WD[d.getDay()]})`; };
 
   const TYPE_LABEL = { bottle: '병', can: '캔', glass: '잔', ml: 'mL' };
-  const FRACS = [1, 0.75, 0.5, 1 / 3, 0.25, 2 / 3, 1.5, 2]; // 분량 버튼 순서
+  const FRACS = [0.5, 1, 2]; // 분량 버튼(간단하게 3개). 그 밖의 분수·소수는 "직접 입력"에서
   const ALCOHOL_DENSITY = 0.789;
 
   /** 순수 알코올(g) = 마신 용량(mL) × 도수(%) ÷ 100 × 0.789 */
@@ -18,7 +18,8 @@
   const r1 = n => Math.round(n * 10) / 10;
   const r2 = n => Math.round(n * 100) / 100;
   const ukey = u => u.t + ':' + (u.ml == null ? '' : u.ml);
-  const isPreset = q => FRACS.some(f => Math.abs(f - q) < 0.005);
+  /** 버튼·+/- 로 만들 수 있는 "간단한 양": ½ 또는 1 이상의 정수. 그 외(¼, 1.5 등)는 직접 입력으로 봄 */
+  const isPreset = q => Math.abs(q - 0.5) < 0.005 || (q >= 0.995 && Math.abs(q - Math.round(q)) < 0.005);
 
   const FR = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
   function fmtQty(q) {

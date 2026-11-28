@@ -10,8 +10,8 @@
   const TEXT = {
     'chamisul-fresh': ['참이슬', 'fresh'], 'chamisul-original': ['참이슬', 'original'], chumchurum: ['처음처럼', ''], jinro: ['진로', ''], saero: ['새로', ''],
     joeunday: ['좋은데이', ''], hallasan: ['한라산', ''], daesun: ['대선', ''], 'grapefruit-eseul': ['자몽', '에이슬'], 'grape-eseul': ['청포도', '에이슬'],
-    'peach-eseul': ['복숭아', '에이슬'], soonhari: ['순하리', ''], cheongha: ['청하', ''],
-    cass: ['Cass', 'FRESH'], terra: ['TERRA', ''], kelly: ['Kelly', ''], hanmac: ['한맥', ''], cloud: ['클라우드', ''], asahi: ['ASAHI', 'SUPER DRY'],
+    'peach-eseul': ['복숭아', '에이슬'], soonhari: ['순하리', ''], bokbunja: ['복분자', ''], cheongha: ['청하', ''],
+    cass: ['Cass', 'FRESH'], 'cass-light': ['Cass', 'LIGHT'], terra: ['TERRA', ''], 'terra-light': ['TERRA', 'LIGHT'], kelly: ['Kelly', ''], hanmac: ['한맥', ''], cloud: ['클라우드', ''], asahi: ['ASAHI', 'SUPER DRY'],
     tsingtao: ['칭따오', ''], heineken: ['HEINEKEN', ''], kirin: ['KIRIN', '一番搾り'], sapporo: ['SAPPORO', ''], budweiser: ['Bud', 'weiser'],
     hoegaarden: ['호가든', ''], kozel: ['Kozel', 'DARK'], guinness: ['GUINNESS', ''],
     'seoul-jangsu': ['서울장수', ''], jipyeong: ['지평', ''], neurinmaeul: ['느린마을', ''], kooksoondang: ['국순당', ''], boksoondoga: ['복순도가', ''],
@@ -137,6 +137,7 @@
   fruit('grape-eseul', '#effad2', '#bfe05a', '#7fa82a');
   fruit('peach-eseul', '#ffe9dc', '#ffae85', '#ee7f50');
   fruit('soonhari', '#fff9d8', '#f7e27a', '#c9a21a');
+  fruit('bokbunja', '#f3dfec', '#9a2c63', '#5a1738');
 
   // --- 맥주: 캔(id), 병(id-bottle), 잔(id-glass) ---
   const beer = (id, can, bottle, liq) => {
@@ -146,6 +147,8 @@
   };
   beer('cass', { body: '#9cc4f4', band: '#2563c9', accent: '#9ec4ff', tc: '#fff' }, { glass: '#d8b27a', edge: '#8a5a22', cap: '#2563c9', label: '#2563c9', accent: '#9ec4ff', tc: '#fff' }, '#f5b942');
   beer('terra', { body: '#a8e2c4', band: '#17924f', accent: '#f2e27a', tc: '#fff' }, { glass: '#b7d9a4', edge: '#3f7f3a', cap: '#17924f', label: '#17924f', accent: '#f2e27a', tc: '#fff' }, '#f2c14e');
+  beer('cass-light', { body: '#e4eefb', band: '#5b9be0', accent: '#ffffff', tc: '#fff' }, { glass: '#e3cfa0', edge: '#8a5a22', cap: '#5b9be0', label: '#5b9be0', accent: '#ffffff', tc: '#fff' }, '#f7d56e');
+  beer('terra-light', { body: '#dcf4e7', band: '#4fbf86', accent: '#f6ecab', tc: '#fff' }, { glass: '#c9e3b8', edge: '#3f7f3a', cap: '#4fbf86', label: '#4fbf86', accent: '#f6ecab', tc: '#fff' }, '#f6d36b');
   beer('kelly', { body: '#f7dd8c', band: '#e0a41f', liq: '#e8b132', accent: '#fff1b8', tc: '#7a4a08' }, { glass: '#e3c58a', edge: '#9a7020', cap: '#e0a41f', label: '#e0a41f', accent: '#fff1b8', tc: '#7a4a08' }, '#f6bf3a');
   beer('hanmac', { body: '#e7b9b0', band: '#a63a3a', accent: '#f1d27a', tc: '#fff' }, { glass: '#d8b27a', edge: '#8a5a22', cap: '#a63a3a', label: '#a63a3a', accent: '#f1d27a', tc: '#fff' }, '#f1a52f');
   beer('cloud', { body: '#e3f1fb', band: '#ffffff', liq: '#f4f9fd', accent: '#4aa3df', tc: '#2f86bd', edge: '#9fb4c9' }, { glass: '#d8b27a', edge: '#8a5a22', cap: '#4aa3df', label: '#ffffff', accent: '#4aa3df', tc: '#2f86bd' }, '#f5b942');

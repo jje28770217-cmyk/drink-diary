@@ -77,6 +77,7 @@
       case 'cat': S.cat = v; S.q = ''; render(); break;
       case 'fav': store.toggleFav(v); render(); break;
       case 'pick': openAmount(v); break;
+      case 'theme': lsSet(THEME_KEY, v); applyTheme(); render(); break;
       case 'setRecDate': S.recDate = v; render(); break;
       case 'pickDate': { const i = $('#dateIn'); if (i.showPicker) i.showPicker(); else i.click(); break; }
       case 'closeAmount': closeAmount(); break;
@@ -161,6 +162,16 @@
   doc.addEventListener('visibilitychange', () => { if (doc.visibilityState === 'hidden' && store) store.flush(); });
   root.addEventListener('pagehide', () => { if (store) store.flush(); });
 
+  /* ---------- 화면 테마 (시스템 / 라이트 / 다크) ---------- */
+  const THEME_KEY = 'drinkBalance.theme';
+  const getTheme = () => { const t = lsGet(THEME_KEY); return t === 'light' || t === 'dark' ? t : 'system'; };
+  function applyTheme() {
+    const t = getTheme(), sysDark = !!(root.matchMedia && root.matchMedia('(prefers-color-scheme: dark)').matches), dark = t === 'dark' || (t === 'system' && sysDark);
+    doc.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    const m = doc.querySelector('meta[name=theme-color]'); if (m) m.setAttribute('content', dark ? '#0e1511' : '#f3fcf3');
+  }
+  try { root.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (getTheme() === 'system') { applyTheme(); if (views) render(); } }); } catch (e) { /* 구형 브라우저 */ }
+
   /* ---------- 백업 알림 ---------- */
   const lsGet = k => { try { return root.localStorage.getItem(k); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { root.localStorage.setItem(k, v); } catch (e) { /* 저장 불가 */ } };
@@ -209,7 +220,7 @@
       store = make(sel.adapter); await store.load();
     }
     storageInfo = sel;
-    views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo, cloud, backupInfo });
+    views = DB.createViews({ store, calc, stats, S, GUIDE: DB.guide, DATA: DB.data, storageInfo: () => storageInfo, cloud, backupInfo, theme: getTheme });
     render();
     if (sel.note) toast(sel.note);
     DB.app = { store, S, render, openAmount, openDay, addPhotos, cloud };   // 디버깅·테스트용

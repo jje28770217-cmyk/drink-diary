@@ -186,8 +186,8 @@
         const on = !dr.customMode && Math.abs(dr.qty - f) < 0.005, ml = N.unitMl ? Math.round(f * N.unitMl) : null;
         const g = N.unitMl && N.abv != null ? calc.gramOf(f * N.unitMl, N.abv) : null;
         return `<button class="tile ${on ? 'on' : ''}" data-act="qty" data-v="${f}"><span class="ptile xs">${img(icon, Math.min(1, f), { flat: true, h: SIZE.tile })}</span><span class="tl"><b>${fmtQty(f)}${TYPE_LABEL[t]}</b> <em>${ml ? (f >= 1 ? ml + 'ml' : '약 ' + ml + 'ml') : '용량 입력'}</em></span><small>${g != null ? '순수 알코올 ' + r1(g) + 'g' : '도수·용량을 입력하세요'}</small></button>`;
-      }).join('') + `<button class="tile ${dr.customMode ? 'on' : ''}" data-act="custom"><span class="ptile xs mint"><span class="tile-pen">✎</span></span><span class="tl"><b>직접 입력</b></span><small>${dr.customMode ? '아래에서 숫자를 조절하세요' : '잔·mL 단위로 세부 조절'}</small></button>`;
-      const step = t === 'ml' ? 50 : 0.25;
+      }).join('') + `<button class="tile wide ${dr.customMode ? 'on' : ''}" data-act="custom"><span class="ptile xs mint"><span class="tile-pen">✎</span></span><span class="tl"><b>직접 입력</b></span><small>${dr.customMode ? '아래 칸에 숫자를 입력하세요' : '1.5병, ¼병처럼 직접 입력'}</small></button>`;
+      const step = t === 'ml' ? 50 : 1;
       return `<div class="screen-in">
         <div class="sc-head"><button class="icon-btn x" data-act="closeAmount" aria-label="뒤로">${I.back}</button><span>음주 기록</span></div>
         <div class="live-badge"><span class="pill ${dr.date !== calc.todayS() ? 'warn' : 'mint'}">📅 ${niceDate(dr.date)}에 기록${dr.date !== calc.todayS() ? ' · 지난 날짜' : ''}</span> <span class="pill ghost"><i class="dot ok"></i>실시간 순수 알코올 계산</span></div>
@@ -337,6 +337,8 @@
       const pf = store.profile, info = ctx.storageInfo();
       return `${topbar()}<div class="page-head"><div><h1>설정</h1></div></div>
         ${accountCard()}
+        <section class="card"><h3 class="card-h">화면 테마</h3><div class="note">이 기기에서만 적용돼요. '시스템'은 휴대폰·PC의 다크 모드 설정을 따라가요.</div>
+          <div class="chips">${[['system', '시스템'], ['light', '라이트'], ['dark', '다크']].map(([k, n]) => `<button class="chip ${ctx.theme() === k ? 'on' : ''}" data-act="theme" data-v="${k}">${n}</button>`).join('')}</div></section>
         <section class="card"><h3 class="card-h">내 정보 <small>건강 기준 선택용</small></h3><div class="note">${ctx.cloud && ctx.cloud.loggedIn ? '이 정보는 내 계정(클라우드)에 저장됩니다. <b>친구에게는 성별 설정만 보이고, 나이·임신 설정은 공유되지 않습니다.</b>' : '이 정보는 이 기기(또는 내 서버)에만 저장되며 외부로 전송되지 않습니다.'} 선택하지 않으면 더 낮은(보수적인) 기준을 사용합니다.</div>
           <div class="field"><span>성별</span><div class="chips">${[['unset', '선택 안 함'], ['female', '여성'], ['male', '남성']].map(([k, n]) => `<button class="chip ${pf.sex === k ? 'on' : ''}" data-act="sex" data-v="${k}">${n}</button>`).join('')}</div></div>
           <label class="field"><span>나이 (선택)</span><input id="ageIn" inputmode="numeric" value="${esc(pf.age)}" placeholder="예: 34"></label>

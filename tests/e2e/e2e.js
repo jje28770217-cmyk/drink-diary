@@ -100,6 +100,22 @@ async function scenario(b, url, label, expectRemote) {
     ok('다른 탭에서 기록하기를 누르면 오늘로 시작', (await b.eval(`DB.app.S.recDate`)) === today);
     await b.eval(`DB.app.store.deleteEntry('${d3}', DB.app.store.entriesOf('${d3}').slice(-1)[0].id); DB.app.store.deleteEntry('${d2}', DB.app.store.entriesOf('${d2}').slice(-1)[0].id); DB.app.store.deleteEntry('${d6}', DB.app.store.entriesOf('${d6}').slice(-1)[0].id); DB.app.render(); true`);
   }
+  // 10-4) 다크 모드: 설정에서 고르면 즉시 적용·저장되고, 시스템 모드는 OS 설정을 따름
+  {
+    const theme = () => b.eval(`document.documentElement.getAttribute('data-theme')`), bg = () => b.eval(`getComputedStyle(document.documentElement).getPropertyValue('--bg').trim()`);
+    await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
+    await b.eval(`c('[data-act=tab][data-v=set]'); c('[data-act=theme][data-v=light]'); true`);
+    const lightBg = await bg(); ok('라이트 선택 → 밝은 배경', (await theme()) === 'light' && /^#f/i.test(lightBg), lightBg);
+    await b.eval(`c('[data-act=theme][data-v=dark]'); true`);
+    const darkBg = await bg(); ok('다크 선택 → 어두운 배경, 저장됨', (await theme()) === 'dark' && /^#0/i.test(darkBg) && (await b.eval(`localStorage.getItem('drinkBalance.theme')`)) === 'dark', darkBg);
+    ok('다크에서 차트·본문 색 변수가 바뀜', (await b.eval(`getComputedStyle(document.documentElement).getPropertyValue('--card').trim()`)) !== '#ffffff');
+    await b.eval(`c('[data-act=theme][data-v=system]'); true`);
+    ok('시스템 모드 + OS 라이트 → 라이트', (await theme()) === 'light');
+    await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] }); await sleep(300);
+    ok('시스템 모드 + OS 다크 → 다크(자동 따라감)', (await theme()) === 'dark');
+    await b.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'light' }] });
+    await b.eval(`c('[data-act=theme][data-v=light]'); c('[data-act=tab][data-v=cal]'); true`);
+  }
   // 11) 저장 유지: 새로고침 후에도 남아 있는지
   await b.eval(`DB.app.store.flush()`); await sleep(400);
   const before = await b.eval(`DB.app.store.entriesOf(DB.calc.todayS()).length`);
